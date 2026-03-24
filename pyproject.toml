@@ -1,0 +1,58 @@
+[project]
+name = "bkmonitor-ecosystem"
+version = "0.1.0"
+description = "提供「最小化」开箱即用的观测数据接入 demo，帮助用户快速入门蓝鲸观测平台功能。"
+authors = [
+    { name = "TencentBlueKing", email = "contactus_bk@tencent.com" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "urllib3==2.5.0",
+    "Jinja2>=3.1.6",
+    "requests>=2.32.5",
+    "pre-commit>=4.3.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = false
+dev-dependencies = [
+    "ruff>=0.4.0",
+]
+
+[tool.ruff]
+line-length = 120
+exclude = [
+    "migrations",
+    "*.pyc",
+    ".git",
+    "__pycache__",
+    "static",
+    "node_modules",
+    "templates",
+    "bin",
+    "config",
+    "scripts",
+    "script",
+    "tools",
+    ".hg",
+    ".mypy_cache",
+    ".tox",
+    ".venv",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["F405"]
+
+[tool.ruff.lint.per-file-ignores]
+"inner.py" = ["E501"]
+

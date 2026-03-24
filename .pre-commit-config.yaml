@@ -1,0 +1,52 @@
+default_stages: [pre-commit]
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.4.0
+    hooks:
+      - id: check-merge-conflict
+      - id: trailing-whitespace
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.11.6
+    hooks:
+      # Run the linter.
+      - id: ruff
+        args: [ --fix ]
+      # Run the formatter.
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: insert-license-header
+        name: Insert MIT License Header
+        entry: python3 tools/scripts/pre-commit/insert_license_header.py --fix
+        language: system
+        types: [ text ]
+
+      - id: lint-md-local
+        name: Markdown文档规范检查（本地）
+        entry: ./lint-md-precommit.sh
+        language: system
+        types: [ markdown ]
+        require_serial: true
+
+      - id: make-lint
+        name: make lint 命令调用
+        entry: make lint
+        language: system
+        require_serial: true
+
+      - id: make-render
+        name: make render 命令渲染模板文件
+        entry: make render
+        language: system
+        require_serial: true # 串行执行
+
+      # PreCI 检查
+      - id: check-pre-ci
+        name: check pre ci
+        entry: bash tools/scripts/pre-commit/pre_check.sh
+        language: system
+        verbose: true
+        pass_filenames: false

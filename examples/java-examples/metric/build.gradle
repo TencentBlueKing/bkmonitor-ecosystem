@@ -1,0 +1,32 @@
+plugins {
+    id "java"
+    id "application"
+}
+
+application {
+    mainClass = "com.tencent.bkm.demo.metric.Main"
+}
+
+group = "com.tencent.bkm.demo.metric"
+version = "1.0-SNAPSHOT"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform("org.junit:junit-bom:5.10.0")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+
+    implementation platform("io.opentelemetry:opentelemetry-bom:1.42.0")
+
+    implementation("io.opentelemetry:opentelemetry-api")
+    implementation("io.opentelemetry:opentelemetry-sdk")
+    implementation("io.opentelemetry:opentelemetry-exporter-otlp")
+    implementation("io.opentelemetry.semconv:opentelemetry-semconv:1.27.0-alpha")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-resources:2.7.0-alpha")
+}
+
+test {
+    useJUnitPlatform()
+}

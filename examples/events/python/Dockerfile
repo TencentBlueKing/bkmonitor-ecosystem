@@ -1,0 +1,48 @@
+ARG PYTHON_VERSION=3.11
+
+FROM python:${PYTHON_VERSION}-slim AS base
+
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    PATH="/.venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN set -ex && \
+    sed -i 's/deb.debian.org/mirrors.cloud.tencent.com/g' /etc/apt/sources.list.d/debian.sources && \
+    apt update && \
+    apt install -y --no-install-recommends tini
+
+# ------------------- Stage 1: Build Stage ------------------------------
+FROM base AS builder
+
+WORKDIR /
+
+COPY requirements.txt .
+
+RUN set -ex && \
+    mkdir ~/.pip && \
+    echo "[global]" >> ~/.pip/pip.conf && \
+    echo "index-url=https://mirrors.tencent.com/pypi/simple/" >> ~/.pip/pip.conf
+
+RUN set -ex && \
+    python -m venv .venv && \
+    pip install -r ./requirements.txt
+
+# ------------------- Stage 2: Final Stage ------------------------------
+FROM base
+
+WORKDIR /app
+
+COPY --from=builder /.venv /.venv
+COPY src .
+
+ENV TOKEN="fixme" \
+    API_URL="fixme" \
+    DATA_ID="fixme" \
+    TARGET_IP='127.0.0.1' \
+    INTERVAL="60"
+
+
+ENTRYPOINT ["tini", "--"]
+CMD ["python", "/app/main.py"]

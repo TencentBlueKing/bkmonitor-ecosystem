@@ -1,0 +1,52 @@
+syntax = "proto3";
+package   trpc.example.greeter;
+option go_package = "bk-apm/bkmonitor-ecosystem/examples/go-examples/trpc-otlp-oteam-open/greeter";
+
+
+message HelloRequest {
+  string msg = 1;
+  int64 sleep_nanosecond = 2;
+  int32 error_code = 3;
+  string target = 4;
+}
+
+message HelloReply {
+  string msg = 1;
+  int32 error_code = 3;
+  string data = 4;
+}
+
+message BusinessServerRequest {
+  string type = 1;
+  int32 labels  = 2;
+  int32 value_len = 3;
+  int32 policy = 4;
+}
+
+message BusinessServerReply {
+  string msg = 1;
+  int32 error_code = 3;
+}
+
+message BusinessErrorRequest {
+  // 错误信息
+  string msg = 1;
+  // 错误码
+  int64 error_code = 2;
+  // 是否返回错误
+  bool return_err = 3  ;
+}
+
+message BusinessErrorReply {
+  // 错误信息
+  string msg = 1;
+  // 错误码
+  int64 error_code = 3;
+}
+
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply);
+  rpc SayHi (HelloRequest) returns (HelloReply);
+  rpc BusinessServer (BusinessServerRequest) returns (BusinessServerReply);
+  rpc BusinessError (BusinessErrorRequest) returns (BusinessErrorReply);
+}

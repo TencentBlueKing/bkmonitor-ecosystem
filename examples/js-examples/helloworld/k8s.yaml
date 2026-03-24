@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    opentelemetry.io/name: "helloworld-js"
+  name: helloworld-js
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      opentelemetry.io/name: "helloworld-js"
+  template:
+    metadata:
+      labels:
+        opentelemetry.io/name: "helloworld-js"
+    spec:
+      containers:
+        - name: helloworld-js
+          image: mirrors.tencent.com/crayon/helloworld-js:latest
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: 128m
+              memory: 128Mi
+            requests:
+              cpu: 64m
+              memory: 64Mi
+          env:
+            - name: "TOKEN"
+              value: "fixme"
+            - name: "SERVICE_NAME"
+              value: "helloworld-js"
+            - name: "OTLP_ENDPOINT"
+              value: "http://bkm-collector.bkmonitor-operator:4318"
+            - name: "ENABLE_TRACES"
+              value: "true"
+            - name: "ENABLE_METRICS"
+              value: "true"
+            - name: "ENABLE_LOGS"
+              value: "true"

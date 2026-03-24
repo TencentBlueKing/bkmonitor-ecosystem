@@ -1,0 +1,19 @@
+[project]
+name = "profiling"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "ddtrace==1.7.5",
+    # https://github.com/DataDog/dd-trace-py/issues/5671
+    "Flask>=3.1.1",
+    "requests>=2.32.5",
+]
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black" # 兼容 black
+line_length = 120

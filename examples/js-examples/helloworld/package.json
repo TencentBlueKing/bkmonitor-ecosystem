@@ -1,0 +1,33 @@
+{
+  "name": "helloworld",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/api-logs": "^0.204.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.62.2",
+    "@opentelemetry/exporter-logs-otlp-http": "^0.204.0",
+    "@opentelemetry/exporter-metrics-otlp-http": "^0.204.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.204.0",
+    "@opentelemetry/resources": "^2.1.0",
+    "@opentelemetry/sdk-logs": "^0.204.0",
+    "@opentelemetry/sdk-metrics": "^2.1.0",
+    "@opentelemetry/sdk-node": "^0.204.0",
+    "@opentelemetry/semantic-conventions": "^1.37.0",
+    "express": "^4.19.2",
+    "qs": "^6.14.1",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
+  },
+  "overrides": {
+    "debug": "^4.3.4"
+  }
+}

@@ -1,0 +1,122 @@
+global:  # 全局配置
+  namespace: Development  # 环境类型，分正式 production 和非正式 development 两种类型
+  env_name: test  # 环境名称，非正式环境下多环境的名称
+  container_name: ${container_name} #容器名称
+  local_ip: ${local_ip} #本地 IP，容器内为容器 ip，物理机或虚拟机为本机 ip
+
+server:  # 服务端配置
+  app: example  # 业务的应用名
+  server: greeter  # 进程服务名
+  bin_path: /usr/local/trpc/bin/  # 二进制可执行文件和框架配置文件所在路径
+  conf_path: /usr/local/trpc/conf/  # 业务配置文件所在路径
+  data_path: /usr/local/trpc/data/  # 业务数据文件所在路径
+  filter:  # 针对所有 service 处理函数前后的拦截器列表
+    - opentelemetry
+  service:  # 业务服务提供的 service，可以有多个
+    - name: trpc.example.greeter.Greeter  # service 的路由名称
+      ip: 127.0.0.1  # 服务监听 ip 地址 可使用占位符 ${ip},ip 和 nic 二选一，优先 ip
+      # nic: eth0
+      port: 8000      # 服务监听端口 可使用占位符 ${port}
+      network: tcp    # 网络监听类型 tcp udp
+      protocol: trpc  # 应用层协议 trpc http
+      transport: tnet # protocol 为 http 时需要删除本行, tnet 暂时不支持 http 协议
+      timeout: 1000   # 请求最长处理时间 单位 毫秒
+    - name: trpc.example.greeter.http #service 的路由名称，请将 ReplaceMe 改成自己的 service 名字，App server 占位符不要改
+      network: tcp    # 网络监听类型  tcp udp
+      protocol: http  # 应用层协议 trpc HTTP
+      timeout: 1000   # 请求最长处理时间 单位 毫秒
+      ip: 0.0.0.0     # 容器内 ip
+      port: 8080
+
+client:  # 客户端调用的后端配置
+  timeout: 1000  # 针对所有后端的请求最长处理时间
+  namespace: Development  # 针对所有后端的环境
+  filter:  # 针对所有后端调用函数前后的拦截器列表
+    - opentelemetry
+  service:  # 针对单个后端的配置
+    - name: trpc.example.greeter.Greeter  # 后端服务的 service name
+      namespace: Development  # 后端服务的环境
+      network: tcp  # 后端服务的网络类型 tcp udp 配置优先
+      protocol: trpc  # 应用层协议 trpc http
+      transport: tnet  # protocol 为 http 时需要删除本行, tnet 暂时不支持 http 协议
+      target: ip://${server_host}:8000  # 请求服务地址
+      timeout: 1000   # 请求最长处理时间
+    - name: trpc.example.greeter.http
+      namespace: Development                   # 后端服务的环境
+      network: tcp                             # 后端服务的网络类型 tcp udp 配置优先
+      protocol: http                           # 应用层协议 trpc http
+      env_name: ${env_name}
+      timeout: 3000                            # 请求最长处理时间
+      target: ip://${server_host}:8080
+
+plugins:  # 插件配置
+  log:  # 日志配置
+    default:  # 默认日志的配置，可支持多输出
+      - writer: console  # 控制台标准输出 默认
+        level: info  # 标准输出日志的级别
+
+  telemetry: # 注意缩进层级关系
+    opentelemetry:
+      addr: "${otlp_endpoint}"  # ❗️❗️️【非常重要】上报地址，请根据页面接入指引提供的 `gRPC` 接入地址进行填写。
+      tenant_id: "${token}"   # ❗️❗️️【非常重要】 替换为页面申请到的 Token
+      sampler:
+        fraction: 1.0 # 采样（0.0001代表每10000请求上报一次trace数据）
+      attributes:
+        - key: "service_name"
+          value: example.greeter   # ❗️❗️️【非常重要】请使用 ${应用名(server.app)}.${服务名(server.server)}
+#        #【可选】如何发现容器信息
+#        #【推荐】将上报域名切换为集群内域名（bkm-collector.bkmonitor-operator），端口、上报路径与之前一致，
+#        # 即可自动获取关联。
+#        #【手动关联】手动补充以下全部集群信息字段，也可以进行关联：
+#        # Pod 名称
+#        - key: "k8s.pod.name"
+#          value: "${K8S_POD_NAME}"
+#        # Pod 名称
+#        - key: "k8s.namespace.name"
+#          value: "${K8S_NAMESPACE}"
+#        # 集群 ID
+#        - key: "k8s.bcs.cluster.id"
+#          value: "BCS-K8S-00000"
+
+      metrics:
+        enable_register: false # 关闭etcd注册
+        # 可选配置 (default false). 设置为 true 后，上报 metric 时会对被调接口名进行原样上报。
+        # 非 restful 的 http 服务需要把 disable_rpc_method_mapping 设置为 true。
+        # restful 服务则设置为 false 且需要使用 metric.RegisterMethodMapping 注册 path 与 pattern 映射关系，避免高基数问题。
+        disable_rpc_method_mapping: true
+        # ❗️【提醒】耗时分桶设置：可根据业务实际情况再微调下，另外分桶数最好也不要超过 15 个，分桶数越多，指标量级将等比例上涨。
+        client_histogram_buckets: [ 0, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10 ]
+        server_histogram_buckets: [ 0, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10 ]
+        prometheus_push: # OpenTelemetry push 配置
+          enabled: true # 是否开启 metric OpenTelemetry push，默认 false。
+          url: "${otlp_http_endpoint}" # ❗️❗️️【非常重要】上报地址，请根据页面接入指引提供的 `HTTP` 地址进行填写。
+          # ❗️【提醒】建议配置 30s，否则可能会影响调用分析数据展示。
+          interval: 30s
+          job: "reporter"
+          grouping:
+            service_name: example.greeter   # ❗️❗️️【非常重要】请使用 ${应用名(server.app)}.${服务名(server.server)}
+            instance: "${K8S_POD_IP}" # ❗️❗️️【非常重要】Pod 的 IP 地址（容器部署）或本机 IP（物理机或虚拟机部署）
+            namespace: "${namespace}" # ❗️❗️️【非常重要】请保持和配置文件中的 ${物理环境(global.namespace)} 一致
+            env_name: "${env_name}" # ❗️❗️️【非常重要】请保持和配置文件中的 ${用户环境(global.env_name)} 一致
+            container_name: "${K8S_POD_NAME}" # ❗️❗️️【非常重要】Pod 的名称
+          http_headers:
+            X-BK-TOKEN: "${token}"   # ❗️❗️️【非常重要】 替换为页面申请到的 Token
+        # 错误码重定义：codes 可设置特定错误码的类型, 以便计算错误率/超时率/成功率和看板展示错误码描述。
+        # 该配置在 Traces、Metrics 同时生效。
+        codes: # 可选：
+          - code: 500
+            type: success
+            description: success
+            # ❗️提醒：service / method 互斥，优先级 service > method。
+            # service: trpc.example.greeter.http
+            method: /500
+      traces: # 链路延迟采样相关配置
+        disable_trace_body: false
+        enable_deferred_sample: true # 开启延迟采样 在span结束后的导出采样, 额外上报出错的/高耗时的
+        deferred_sample_error: true # 采样出错的
+        deferred_sample_slow_duration: 1ms # 采样耗时大于指定值的
+      logs:
+        enabled: true # 远程日志开关，默认关闭
+        level: "debug" # 上报日志级别，可选：debug, info, warn, error, fatal, panic
+        trace_log_mode: "verbose"
+        addr: "${otlp_endpoint}"   # ❗️❗️️【非常重要】上报地址，请根据页面接入指引提供的 `gRPC` 接入地址进行填写。

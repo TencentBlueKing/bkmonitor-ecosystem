@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taf-demo
+spec:
+  selector:
+    matchLabels:
+      app: taf-demo
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: taf-demo
+    spec:
+      containers:
+      - name: taf-demo
+        image: mirrors.tencent.com/crayon/taf-demo:latest
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 13000
+            name: taf-port
+        env:
+          - name: COLLECTOR_HOST
+            value: "bkm-collector.bkmonitor-operator"
+          - name: SERVER
+            value: "HelloGo"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: taf-demo-service
+spec:
+  type: ClusterIP
+  selector:
+    app: taf-demo
+  ports:
+    - protocol: TCP
+      port: 13000
+      targetPort: taf-port

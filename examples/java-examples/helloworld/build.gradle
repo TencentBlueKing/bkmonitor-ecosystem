@@ -1,0 +1,59 @@
+plugins {
+    id "java-library"
+    id "application"
+}
+
+group = "com.tencent.bkm.demo.helloworld"
+version = "1.0-SNAPSHOT"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+    implementation(platform("org.apache.logging.log4j:log4j-bom:2.24.0"))
+    implementation("org.apache.logging.log4j:log4j-api")
+    implementation("org.apache.logging.log4j:log4j-core")
+
+    implementation platform("io.opentelemetry:opentelemetry-bom:1.42.0")
+
+    implementation("io.opentelemetry:opentelemetry-api")
+    implementation("io.opentelemetry:opentelemetry-sdk")
+    implementation("io.opentelemetry:opentelemetry-exporter-otlp")
+    implementation("io.opentelemetry.semconv:opentelemetry-semconv:1.27.0-alpha")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-resources:2.7.0-alpha")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-log4j-appender-2.17:2.8.0-alpha")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-java-http-client:2.8.0-alpha")
+
+    // Profiling
+    implementation("io.pyroscope:agent:0.14.0")
+    implementation("io.pyroscope:otel:0.10.1.11")
+
+    // Lombok 依赖
+    // 1.18.28 -> 1.18.30 to solve: https://github.com/thingsboard/thingsboard/issues/9812
+    compileOnly "org.projectlombok:lombok:1.18.30"
+    annotationProcessor "org.projectlombok:lombok:1.18.30"
+
+    api "org.projectlombok:lombok:1.18.30"
+    annotationProcessor "org.projectlombok:lombok:1.18.30"
+
+    testImplementation "org.projectlombok:lombok:1.18.30"
+    testAnnotationProcessor "org.projectlombok:lombok:1.18.30"
+}
+
+
+test {
+    useJUnitPlatform()
+}
+
+application {
+    mainClassName = "com.tencent.bkm.demo.helloworld.Main"
+}
+
+allprojects {
+    tasks.withType(JavaCompile) {
+        options.encoding = "UTF-8"
+        options.compilerArgs.add "-parameters"
+    }
+}

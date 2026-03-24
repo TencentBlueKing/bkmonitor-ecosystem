@@ -1,0 +1,9 @@
+trpc.log*
+conf/*_local.yaml
+vendor
+target
+trpc-otlp-oteam-open
+
+greeter/*.go
+greeter/*.sum
+greeter/*.mod

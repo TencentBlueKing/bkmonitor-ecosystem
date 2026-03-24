@@ -1,0 +1,16 @@
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d %highlight{%p} %class{1.} %style{[%t]}{blue} [%traceId] %location %m %ex%n"/>
+        </Console>
+        <GRPCLogClientAppender name="grpc-log">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </GRPCLogClientAppender>
+    </Appenders>
+    <Loggers>
+        <Root level="info" includeLocation="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="grpc-log"/>
+        </Root>
+    </Loggers>
+</Configuration>
