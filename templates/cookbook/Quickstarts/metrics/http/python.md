@@ -68,6 +68,11 @@ docker run -e TOKEN="{{access_config.token}}" \
 运行输出：
 
 ```bash
+🚀 启动指标上报服务
+API地址: {{access_config.custom.http}}
+数据ID: 00000
+上报间隔: 60秒
+=================================
 [2025-07-04 09:16:21] ✅ 上报成功 | CPU: 4.91% 内存: 30.13%
 [2025-07-04 09:17:22] ✅ 上报成功 | CPU: 17.17% 内存: 30.51%
 [2025-07-04 09:18:24] ✅ 上报成功 | CPU: 17.12% 内存: 30.15%
@@ -81,25 +86,27 @@ docker run -e TOKEN="{{access_config.token}}" \
 
 ```python
 # -*- coding: utf-8 -*-
-import json
-import argparse
-import time
-import requests
-import random
+"""Metrics HTTP report demo: periodically reports CPU and memory usage."""
+
 import os
+import random
+import time
+
+import requests
 
 
 def collect_metrics():
     """采集模拟周期上报 CPU 及内存使用率（数值随机生成）"""
     cpu_load = random.uniform(0, 100)
-    mem_usage =  random.uniform(0, 100)
+    mem_usage = random.uniform(0, 100)
     return cpu_load, mem_usage
 
 
 def send_report(api_url, token, data_id, metrics):
     """发送数据到HTTP接口"""
     payload = {
-        "data_id": int(data_id),  # ❗❗【非常重要】必须是整数类型，否则上报会失败
+        # ❗❗【非常重要】必须是整数类型，否则上报会失败
+        "data_id": int(data_id),
         "access_token": token,
         "data": [
             {
@@ -109,20 +116,26 @@ def send_report(api_url, token, data_id, metrics):
             }
         ],
     }
-    try:
-        response = requests.post(api_url, json=payload, timeout=10, headers={"Content-Type": "application/json"})
-        return response.status_code
-    except requests.exceptions.RequestException as e:
-        print(f"⚠️ 请求异常: {e}")
-        return 500
+    response = requests.post(api_url, json=payload, timeout=10, headers={"Content-Type": "application/json"})
+    return response.status_code
 
 
 def main():
-    # ❗❗【非常重要】数据上报接口地址（`Access URL`），国内站点请填写「 {{access_config.custom.http}} 」，其他环境、跨云场景请根据页面接入指引填写
+    """Main entry point for metrics reporting service."""
+    # ❗❗【非常重要】数据上报接口地址（`Access URL`），国内站点请填写「 {{access_config.custom.http}} 」
+    # 其他环境、跨云场景请根据页面接入指引填写
     api_url = os.getenv("API_URL", "")
-    token = os.getenv("TOKEN", "")  # ❗❗【非常重要】access_token:认证令牌，用于接口鉴定，配置为应用 TOKEN
-    data_id = os.getenv("DATA_ID", "")  # ❗❗【非常重要】 data_id，标识上报的数据类型，配置为应用数据 ID
-    interval = int(os.getenv("INTERVAL", "60"))  # 默认间隔60秒
+    # ❗❗【非常重要】access_token:认证令牌，用于接口鉴定，配置为应用 TOKEN
+    token = os.getenv("TOKEN", "")
+    # ❗❗【非常重要】 data_id，标识上报的数据类型，配置为应用数据 ID
+    data_id = os.getenv("DATA_ID", "")
+    # 默认间隔60秒
+    interval = int(os.getenv("INTERVAL", "60"))
+    print("🚀 启动指标上报服务")
+    print(f"API地址: {api_url}")
+    print(f"数据ID: {data_id}")
+    print(f"上报间隔: {interval}秒")
+    print("=================================")
     while True:
         metrics = collect_metrics()
         status = send_report(api_url, token, data_id, metrics)
