@@ -4,7 +4,6 @@ FROM python:${PYTHON_VERSION}-slim AS base
 
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
-    PATH="/.venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
@@ -20,20 +19,18 @@ WORKDIR /
 COPY requirements.txt .
 
 RUN set -ex && \
-    mkdir ~/.pip && \
+    mkdir -p ~/.pip && \
     echo "[global]" >> ~/.pip/pip.conf && \
     echo "index-url=https://mirrors.tencent.com/pypi/simple/" >> ~/.pip/pip.conf
 
-RUN set -ex && \
-    python -m venv .venv && \
-    pip install -r ./requirements.txt
+RUN pip install --prefix=/install -r ./requirements.txt
 
 # ------------------- Stage 2: Final Stage ------------------------------
 FROM base
 
 WORKDIR /app
 
-COPY --from=builder /.venv /.venv
+COPY --from=builder /install /usr/local
 COPY src .
 
 ENV TOKEN="fixme" \
