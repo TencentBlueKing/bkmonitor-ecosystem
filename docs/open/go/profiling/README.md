@@ -1,6 +1,6 @@
 # Profiling-Go（Pyroscope SDK）接入
 
-本指南将帮助您使用 Pyroscope SDK 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/common/examples/helloworld.md" target="_blank">入门项目-HelloWorld</a> 为例，介绍性能分析数据接入及 SDK 使用场景。
+本指南将帮助您使用 Pyroscope SDK 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/common/examples/helloworld.md" target="_blank">入门项目-HelloWorld</a> 为例，介绍性能分析数据接入及 SDK 使用场景。
 
 入门项目功能齐全且可在开发环境运行，可以通过该项目快速接入并体验蓝鲸应用性能监控相关功能。
 

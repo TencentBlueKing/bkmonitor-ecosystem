@@ -37,14 +37,14 @@ class ReferPythonOtlpUrl(metaclass=base.FieldMeta):
     class Meta:
         name = "REFER_PYTHON_OTLP_URL"
         scope = base.ScopeType.OPEN.value
-        value = "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/open/python/otlp/README.md"
+        value = "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/python/otlp/README.md"
 
 
 class ReferJavaOtlpUrl(metaclass=base.FieldMeta):
     class Meta:
         name = "REFER_JAVA_OTLP_URL"
         scope = base.ScopeType.OPEN.value
-        value = "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/open/java/otlp/README.md"
+        value = "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/java/otlp/README.md"
 
 
 class ReferGolangTrpcOteamUrl(metaclass=base.FieldMeta):
@@ -71,14 +71,14 @@ class ReferHelloWorldUrl(metaclass=base.FieldMeta):
     class Meta:
         name = "REFER_HELLO_WORLD_URL"
         scope = base.ScopeType.OPEN.value
-        value = "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/open/common/examples/helloworld.md"
+        value = "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/examples/helloworld.md"
 
 
 class Overview(metaclass=base.FieldMeta):
     class Meta:
         name = "OVERVIEW"
         scope = base.ScopeType.OPEN.value
-        value = """本指南将帮助您使用 OpenTelemetry SDK 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/open/common/examples/helloworld.md" target="_blank">入门项目-HelloWorld</a> 为例，介绍调用链、指标、日志数据接入及 SDK 使用场景。
+        value = """本指南将帮助您使用 OpenTelemetry SDK 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/examples/helloworld.md" target="_blank">入门项目-HelloWorld</a> 为例，介绍调用链、指标、日志数据接入及 SDK 使用场景。
 
 入门项目功能齐全且可在开发环境运行，可以通过该项目快速入门 OpenTelemetry，接入并体验蓝鲸应用性能监控相关功能。"""
 
@@ -102,7 +102,7 @@ class ViewTracesData(metaclass=base.FieldMeta):
         name = "VIEW_TRACES_DATA"
         scope = base.ScopeType.OPEN.value
         value = """Tracing 检索功能主要用于对分布式系统中的请求链路进行跟踪和分析，请参考[「应用性能监控 APM/调用链追踪」](https://bk.tencent.com/docs/markdown/ZH/Monitor/3.9/UserGuide/ProductFeatures/data-visualization/explore_traces.md) 进一步了解相关功能。
-![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/open/common/images/traces.png)"""
+![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/images/traces.png)"""
 
 
 class ViewCustomMetricsData(metaclass=base.FieldMeta):
@@ -110,7 +110,7 @@ class ViewCustomMetricsData(metaclass=base.FieldMeta):
         name = "VIEW_CUSTOM_METRICS_DATA"
         scope = base.ScopeType.OPEN.value
         value = """自定义指标功能旨在帮助用户针对特定应用及其服务进行深度性能指标监控，请参考[「应用性能监控 APM/自定义指标」](#) 进一步了解相关功能。
-![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/open/common/images/custom-metrics.png)"""
+![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/images/custom-metrics.png)"""
 
 
 class ViewLogData(metaclass=base.FieldMeta):
@@ -118,7 +118,7 @@ class ViewLogData(metaclass=base.FieldMeta):
         name = "VIEW_LOG_DATA"
         scope = base.ScopeType.OPEN.value
         value = """日志功能主要用于查看和分析对应服务（应用程序）运行过程中产生的各类日志信息，请参考[「应用性能监控 APM/日志分析」](#) 进一步了解相关功能。
-![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/open/common/images/logs.png)"""
+![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/images/logs.png)"""
 
 
 class LearnMore(metaclass=base.FieldMeta):
@@ -187,7 +187,7 @@ class ApplicationSetUp(metaclass=base.FieldMeta):
         scope = base.ScopeType.OPEN.value
         value = """参考 <a href="https://bk.tencent.com/docs/markdown/ZH/Monitor/3.9/UserGuide/ProductFeatures/scene-apm/apm_monitor_overview.md" target="_blank">APM 接入流程</a> 创建一个应用，接入指引会基于应用生成相应的上报配置，如下：
 
-![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/open/common/images/1-application-setup.png)
+![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/images/1-application-setup.png)
 
 关注接入指引提供的两个配置项：
 
@@ -204,7 +204,7 @@ class ProfilingApplicationSetUp(metaclass=base.FieldMeta):
         scope = base.ScopeType.OPEN.value
         value = """参考 <a href="https://bk.tencent.com/docs/markdown/ZH/Monitor/3.9/UserGuide/ProductFeatures/scene-apm/apm_monitor_overview.md" target="_blank">APM 接入流程</a> 创建一个应用，接入指引会基于应用生成相应的上报配置，如下：
 
-![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/open/common/images/profiling-application-setup.png)
+![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/images/profiling-application-setup.png)
 
 关注接入指引提供的两个配置项：
 
@@ -329,7 +329,7 @@ class ProfilingOverview(metaclass=base.FieldMeta):
     class Meta:
         name = "PROFILING_OVERVIEW"
         scope = base.ScopeType.OPEN.value
-        value = """本指南将帮助您使用 Pyroscope SDK 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/common/examples/helloworld.md" target="_blank">入门项目-HelloWorld</a> 为例，介绍性能分析数据接入及 SDK 使用场景。
+        value = """本指南将帮助您使用 Pyroscope SDK 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/common/examples/helloworld.md" target="_blank">入门项目-HelloWorld</a> 为例，介绍性能分析数据接入及 SDK 使用场景。
 
 入门项目功能齐全且可在开发环境运行，可以通过该项目快速接入并体验蓝鲸应用性能监控相关功能。"""
 
@@ -431,18 +431,18 @@ class DocsAccessConfig(metaclass=base.FieldMeta):
         scope = base.ScopeType.OPEN.value
         value = {
             "metrics": {
-                "What": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Term/metrics/what.md",
+                "What": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Term/metrics/what.md",
                 "Types": "{{COOKBOOK_METRICS_TYPES}}",
                 "http": {
                     "readme": {
                         "faq_different_protocols": "#",
-                        "HTTP_Custom_Report": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/metrics/http/README.md",
-                        "metrics_http_readme": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/metrics/http/README.md",
-                        "Http_Curl": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/metrics/http/curl.md",
-                        "Http_Python": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/metrics/http/python.md",
-                        "Http_C": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/metrics/http/cpp.md",
-                        "Http_Java": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/metrics/http/java.md",
-                        "Http_Go": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/metrics/http/go.md",
+                        "HTTP_Custom_Report": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/metrics/http/README.md",
+                        "metrics_http_readme": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/metrics/http/README.md",
+                        "Http_Curl": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/metrics/http/curl.md",
+                        "Http_Python": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/metrics/http/python.md",
+                        "Http_C": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/metrics/http/cpp.md",
+                        "Http_Java": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/metrics/http/java.md",
+                        "Http_Go": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/metrics/http/go.md",
                     }
                 },
                 "learn": {
@@ -450,11 +450,11 @@ class DocsAccessConfig(metaclass=base.FieldMeta):
                     "Use_indicators": "#",
                     "configure_dashboard": "https://bk.tencent.com/docs/markdown/ZH/Monitor/3.9/UserGuide/ProductFeatures/data-visualization/dashboard.md",
                     "alarms": "https://bk.tencent.com/docs/markdown/ZH/Monitor/3.9/UserGuide/ProductFeatures/alarm-configurations/rules.md",
-                    "SDK_Python": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/metrics/sdks/python.md",
-                    "SDK_C": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/metrics/sdks/cpp.md",
-                    "SDK_Java": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/metrics/sdks/java.md",
-                    "SDK_Go": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/metrics/sdks/go.md",
-                    "metrics_sdks_readme": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/metrics/sdks/README.md",
+                    "SDK_Python": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/metrics/sdks/python.md",
+                    "SDK_C": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/metrics/sdks/cpp.md",
+                    "SDK_Java": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/metrics/sdks/java.md",
+                    "SDK_Go": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/metrics/sdks/go.md",
+                    "metrics_sdks_readme": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/metrics/sdks/README.md",
                 },
                 "sdks": {"sdk_summary": "#"},
             },
@@ -464,11 +464,11 @@ class DocsAccessConfig(metaclass=base.FieldMeta):
                     "faq_no_data": "#",
                 },
                 "http": {
-                    "report_curl": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/events/http/curl.md",
-                    "report_python": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/events/http/python.md",
-                    "report_bkmonitorbeat": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/events/http/bkmonitorbeat.md",
-                    "Http_Preadme": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/events/http/README.md",
-                    "report_java": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/events/http/java.md",
+                    "report_curl": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/events/http/curl.md",
+                    "report_python": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/events/http/python.md",
+                    "report_bkmonitorbeat": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/events/http/bkmonitorbeat.md",
+                    "Http_Preadme": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/events/http/README.md",
+                    "report_java": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/events/http/java.md",
                 },
                 "report_access": "#",
                 "Host_events": "#",

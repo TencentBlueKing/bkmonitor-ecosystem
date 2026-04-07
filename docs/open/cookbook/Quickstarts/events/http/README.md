@@ -95,13 +95,13 @@ curl -g -X POST ${API_URL} -d "${REPORT_DATA}"
 
 ### 3.1 数据上报示例
 
-* 了解 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/events/http/bkmonitorbeat.md" target="_blank">命令行-事件（bkmonitorbeat）上报</a>。
+* 了解 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/events/http/bkmonitorbeat.md" target="_blank">命令行-事件（bkmonitorbeat）上报</a>。
 
-* 了解 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/events/http/curl.md" target="_blank">命令行-事件（HTTP）上报</a>。
+* 了解 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/events/http/curl.md" target="_blank">命令行-事件（HTTP）上报</a>。
 
-* 了解 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/events/http/python.md" target="_blank">Python-事件（HTTP）上报</a>。
+* 了解 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/events/http/python.md" target="_blank">Python-事件（HTTP）上报</a>。
 
-* 了解 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/events/http/java.md" target="_blank">Java-事件（HTTP）上报</a>。
+* 了解 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/events/http/java.md" target="_blank">Java-事件（HTTP）上报</a>。
 
 ### 3.2 查看数据
 
