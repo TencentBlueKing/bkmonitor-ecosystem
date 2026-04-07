@@ -4,7 +4,7 @@
 
 ### 1.1 术语介绍
 
-* <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Term/metrics/what.md" target="_blank">什么是指标</a>
+* <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Term/metrics/what.md" target="_blank">什么是指标</a>
 
 * <a href="{{COOKBOOK_METRICS_TYPES}}" target="_blank">指标类型</a>
 
@@ -27,7 +27,7 @@ cd bkmonitor-ecosystem/examples/metrics/http/python
 
 ### 2.1 创建应用
 
-参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/metrics/http/README.md" target="_blank">自定义指标 HTTP 上报</a> 创建一个上报协议为 `JSON` 的自定义指标，关注创建后提供的两个配置项：
+参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/metrics/http/README.md" target="_blank">自定义指标 HTTP 上报</a> 创建一个上报协议为 `JSON` 的自定义指标，关注创建后提供的两个配置项：
 
 * `TOKEN`：自定义指标数据源 Token，上报数据时使用。
 

@@ -1,6 +1,6 @@
 # Java（SkyWalking Java Agent）接入
 
-本指南将帮助您使用 SkyWalking Agent 接入蓝鲸应用性能监控，以 <a href=https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/open/common/examples/helloworld.md target="_blank">入门项目-HelloWorld</a> 为例，介绍调用链、指标、日志数据接入及 Agent 使用场景。
+本指南将帮助您使用 SkyWalking Agent 接入蓝鲸应用性能监控，以 <a href=https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/examples/helloworld.md target="_blank">入门项目-HelloWorld</a> 为例，介绍调用链、指标、日志数据接入及 Agent 使用场景。
 
 入门项目功能齐全且可在开发环境运行，可以通过该项目快速入门 SkyWalking，接入并体验蓝鲸应用性能监控相关功能。
 
@@ -42,7 +42,7 @@ SkyWalking Java Agent 是基于 <a href="https://docs.oracle.com/en/java/javase/
 
 参考 <a href="https://bk.tencent.com/docs/markdown/ZH/Monitor/3.9/UserGuide/ProductFeatures/scene-apm/apm_monitor_overview.md" target="_blank">APM 接入流程</a> 创建一个应用，接入指引会基于应用生成相应的上报配置，如下：
 
-![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/open/common/images/1-application-setup.png)
+![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/images/1-application-setup.png)
 
 关注接入指引提供的两个配置项：
 
@@ -205,12 +205,12 @@ docker run \
 #### 4.2.1 Traces 检索
 
 Tracing 检索功能主要用于对分布式系统中的请求链路进行跟踪和分析，请参考<a href="https://bk.tencent.com/docs/markdown/ZH/Monitor/3.9/UserGuide/ProductFeatures/data-visualization/explore_traces.md" target="_blank">「应用性能监控 APM/调用链追踪」</a> 进一步了解相关功能。
-![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/open/common/images/traces.png)
+![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/images/traces.png)
 
 #### 4.2.2 指标检索
 
 自定义指标功能旨在帮助用户针对特定应用及其服务进行深度性能指标监控，请参考<a href="#" target="_blank">「应用性能监控 APM/自定义指标」</a> 进一步了解相关功能。
-![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/open/common/images/custom-metrics.png)
+![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/images/custom-metrics.png)
 
 ## 5. 了解更多
 

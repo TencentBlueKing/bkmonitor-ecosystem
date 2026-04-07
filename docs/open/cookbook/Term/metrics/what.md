@@ -161,4 +161,4 @@ disk_partition_used_percent{name="/data2"} 70
 
 * 了解 <a href="{{COOKBOOK_METRICS_TYPES}}" target="_blank">指标类型</a>。
 
-* 了解如何进行 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/metrics/http/README.md" target="_blank">自定义指标 HTTP 上报</a>。
+* 了解如何进行 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/metrics/http/README.md" target="_blank">自定义指标 HTTP 上报</a>。

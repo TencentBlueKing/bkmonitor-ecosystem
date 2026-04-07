@@ -80,4 +80,4 @@ prometheus_target_interval_length_seconds_count{interval="15s"}           497
 
 进一步了解以下内容：
 
-* 了解如何进行 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/main/docs/cookbook/Quickstarts/metrics/http/README.md" target="_blank">自定义指标 HTTP 上报</a>。
+* 了解如何进行 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/metrics/http/README.md" target="_blank">自定义指标 HTTP 上报</a>。
