@@ -76,9 +76,9 @@ func pushMetrics() error {
 
 // 推送指标
     if err := pushMetrics(); err != nil {
-        log.Printf("❌ 推送失败: %v", err)
+        log.Printf("推送失败: %v", err)
     } else {
-        log.Printf("✅ 推送成功")
+        log.Printf("推送成功")
     }
 ```
 
@@ -247,13 +247,13 @@ import (
 // ==================== 配置信息 ====================
 var (
     // ❗️❗️【非常重要】请填写为申请到的自定义指标认证令牌（`Token`）。
-    token    = getEnv("TOKEN", "")
+    token       = getEnv("TOKEN", "")
     // ❗️❗️【非常重要】数据上报地址，请根据页面指引提供的接入地址进行填写。
-    apiURL   = getEnv("API_URL", "")
-    job      = getEnv("JOB", "default_monitor_job")  // 任务名称
-    instance = getEnv("INSTANCE", "127.0.0.1")      // 实例名称
-    port     = getEnv("PORT", "2323")      //  默认2323端口暴露/metrics端点
-    interval = getEnvAsInt("INTERVAL", 60)  // 上报间隔，默认60秒
+    apiURL      = getEnv("API_URL", "")
+    job         = getEnv("JOB", "default_monitor_job") // 任务名称
+    instance    = getEnv("INSTANCE", "127.0.0.1")      // 实例名称
+    metricsPort = getEnv("METRICS_PORT", "2323")       // 默认2323端口暴露/metrics端点
+    interval    = getEnvAsInt("INTERVAL", 60)           // 上报间隔，默认60秒
 
     registry = prometheus.NewRegistry() // 创建注册表
 )
@@ -396,8 +396,6 @@ func pushMetrics() error {
 
 // ==================== 初始化函数 ====================
 func init() {
-    rand.Seed(time.Now().UnixNano())
-
     // 注册所有指标到注册表
     registry.MustRegister(apiCounter)
     registry.MustRegister(cpuGauge)
@@ -407,17 +405,18 @@ func init() {
 
 // ==================== 主函数 ====================
 func main() {
-    log.Println("🚀 启动Prometheus指标上报服务")
-    log.Printf("🔧 配置信息:")
+    log.Println("启动Prometheus指标上报服务")
+    log.Printf("配置信息:")
     log.Printf("  实例: %s", instance)
     log.Printf("  任务: %s", job)
     log.Printf("  目标: %s", apiURL)
-    log.Printf("  认证: %s", func() string {
-        if token != "" { return "已配置" }
-        return "未配置"
-    }())
+    tokenStatus := "未配置"
+    if token != "" {
+        tokenStatus = "已配置"
+    }
+    log.Printf("  认证: %s", tokenStatus)
     log.Printf("  间隔: %d秒", interval)
-    log.Printf("  端口: %s", port)
+    log.Printf("  端口: %s", metricsPort)
     log.Println("")
 
     // 启动Pull模式HTTP服务器
@@ -428,10 +427,10 @@ func main() {
             w.Write([]byte(`{"status": "healthy"}`))
         })
 
-        addr := ":" + port
-        log.Printf("🌐 Pull模式启动: http://0.0.0.0%s/metrics", addr)
+        addr := ":" + metricsPort
+        log.Printf("Pull模式启动: http://0.0.0.0%s/metrics", addr)
         if err := http.ListenAndServe(addr, nil); err != nil {
-            log.Printf("⚠️  HTTP服务器启动失败: %v", err)
+            log.Printf("HTTP服务器启动失败: %v", err)
         }
     }()
 
@@ -455,9 +454,9 @@ func main() {
 
         // 推送指标
         if err := pushMetrics(); err != nil {
-            log.Printf("❌ 推送失败: %v", err)
+            log.Printf("推送失败: %v", err)
         } else {
-            log.Printf("✅ 推送成功")
+            log.Printf("推送成功")
         }
 
         elapsed := time.Since(startTime).Seconds()
@@ -473,7 +472,7 @@ func main() {
 样例代码同时兼容 PULL 和 PUSH，通过 `promhttp.HandlerFor` 使用注册表 `registry` 暴露指标：
 
 ```go
-var port = getEnv("PORT", "2323")   //  默认2323端口暴露/metrics端点
+var metricsPort = getEnv("METRICS_PORT", "2323")   // 默认2323端口暴露/metrics端点
 
 // 启动Pull模式HTTP服务器
 go func() {
@@ -483,10 +482,10 @@ go func() {
         w.Write([]byte(`{"status": "healthy"}`))
     })
 
-    addr := ":" + port
-    log.Printf("🌐 Pull模式启动: http://0.0.0.0%s/metrics", addr)
+    addr := ":" + metricsPort
+    log.Printf("Pull模式启动: http://0.0.0.0%s/metrics", addr)
     if err := http.ListenAndServe(addr, nil); err != nil {
-        log.Printf("⚠️  HTTP服务器启动失败: %v", err)
+        log.Printf("HTTP服务器启动失败: %v", err)
     }
 }()
 ...
@@ -496,7 +495,7 @@ go func() {
 
 ```bash
 docker build -t metrics-sdk-go .
-docker run -p 2323:2323 --name sdk-pull-go metrics-sdk-go
+docker run -p 2323:2323 -e METRICS_PORT=2323 --name sdk-pull-go metrics-sdk-go
 ```
 
 获取指标：

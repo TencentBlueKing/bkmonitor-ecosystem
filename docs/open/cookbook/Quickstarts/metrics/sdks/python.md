@@ -123,6 +123,7 @@ api_counter = Counter(
 def counter_demo():
     status = "200" if random.random() > 0.1 else "500"
     api_counter.labels(api_name="/user/login", status=status).inc(random.randint(1, 3))
+    logger.info(f"📊 Counter指标 | /user/login | 状态: {status}")
 ```
 
 <a href="https://prometheus.github.io/client_python/instrumenting/counter/" target="_blank">Prometheus Python SDK - Counter</a>。
@@ -147,6 +148,7 @@ cpu_gauge = Gauge(
 def gauge_demo():
     # 设置主机 host1 的 CPU 使用率（随机值）
     gauge.labels(host="host1", device="cpu0").set(round(random.uniform(0.1, 99.9), 2))
+    logger.info(f"📈 Gauge指标 | host1 | CPU使用率: {round(random.uniform(0.1, 99.9), 2)}%")
 
     # 减少 host2 的 CPU 值（模拟负载下降）
     gauge.labels(host="host2", device="cpu0").dec(10)  # 减少 10%
@@ -180,6 +182,7 @@ def histogram_demo():
     # 上下文管理器自动计时
     with task_histogram.labels(task_type=task_type).time():
         time.sleep(duration)  # 模拟任务执行
+    logger.info(f"⏱️  Histogram指标 | {task_type} | 耗时: {duration:.2f}s")
 ```
 
 <a href="https://prometheus.github.io/client_python/instrumenting/histogram/" target="_blank">Prometheus Python SDK - Histogram</a>。
@@ -213,6 +216,7 @@ def summary_demo():
 
     # 记录观测值
     process_summary.labels(stage=stage).observe(duration)
+    logger.info(f"⚡ Summary指标 | {stage} | 耗时: {duration:.2f}s")
 ```
 
 <a href="https://prometheus.github.io/client_python/instrumenting/summary/" target="_blank">Prometheus Python SDK - Summary</a>。
@@ -286,7 +290,7 @@ def counter_demo():
     status = "200" if random.random() > 0.9 else "500"  # 10%错误率
     api_name = random.choice(["/user/login", "/data/query", "/order/create"])
     api_counter.labels(api_name=api_name, status=status).inc()
-    logger.debug(f"记录API调用: {api_name} | 状态: {status}")
+    logger.info(f"📊 Counter指标 | {api_name} | 状态: {status}")
 
 # Gauge类型 - CPU使用率监控
 # Refer：https://prometheus.github.io/client_python/instrumenting/gauge/
@@ -302,7 +306,7 @@ def gauge_demo():
     host = f"host{random.randint(1, 3)}"
     usage = round(random.uniform(5.0, 95.0), 1)
     cpu_gauge.labels(host=host).set(usage)
-    logger.debug(f"记录CPU使用率: {host} | 使用率: {usage}%")
+    logger.info(f"📈 Gauge指标 | {host} | 使用率: {usage}%")
 
 # Histogram类型 - 任务耗时分布
 # Refer：https://prometheus.github.io/client_python/instrumenting/histogram/
@@ -322,7 +326,7 @@ def histogram_demo():
     # 自动计时并分桶统计
     with task_histogram.labels(task_type=task_type).time():
         time.sleep(duration)
-    logger.debug(f"记录任务耗时: {task_type} | 耗时: {duration:.2f}s")
+    logger.info(f"⏱️  Histogram指标 | {task_type} | 耗时: {duration:.2f}s")
 
 # Summary类型 - 处理时间摘要
 # Refer：https://prometheus.github.io/client_python/instrumenting/summary/
@@ -338,13 +342,13 @@ def summary_demo():
     stage = random.choice(["validation", "execution", "cleanup"])
     duration = random.uniform(0.1, 3.0)
     process_summary.labels(stage=stage).observe(duration)
-    logger.debug(f"记录处理阶段: {stage} | 耗时: {duration:.2f}s")
+    logger.info(f"⚡ Summary指标 | {stage} | 耗时: {duration:.2f}s")
 
 # ===== 主执行逻辑 =====
 
 def main():
     """主执行函数 -  同时支持Pull模式与Push模式"""
-    start_http_server(METRICS_PORT)
+    start_http_server(METRICS_PORT, registry=registry)
     logger.info(f"已启用Pull模式 | 指标端点: http://127.0.0.1:{METRICS_PORT}/metrics")
 
     logger.info(f"启动指标上报服务 | 实例: {INSTANCE} | 任务: {JOB}")
@@ -385,7 +389,7 @@ from prometheus_client import start_http_server
 METRICS_PORT = int(os.getenv("METRICS_PORT", "2323"))  # 默认2323端口暴露/metrics端点
 
 def main():
-    start_http_server(METRICS_PORT)
+    start_http_server(METRICS_PORT, registry=registry)
     logger.info(f"已启用Pull模式 | 指标端点: http://127.0.0.1:{METRICS_PORT}/metrics")
     ...
 ```
@@ -394,7 +398,7 @@ def main():
 
 ```bash
 docker build -t metrics-sdk-python .
-docker run -p 2323:2323 --name sdk-pull-python metrics-sdk-python
+docker run -p 2323:2323 -e METRICS_PORT=2323 --name sdk-pull-python metrics-sdk-python
 ```
 
 获取指标：
@@ -406,11 +410,35 @@ curl http://127.0.0.1:2323/metrics
 得到类似输出说明启动成功：
 
 ```python
-# HELP python_gc_objects_collected_total Objects collected during gc
-# TYPE python_gc_objects_collected_total counter
-python_gc_objects_collected_total{generation="0"} 362.0
-python_gc_objects_collected_total{generation="1"} 0.0
-python_gc_objects_collected_total{generation="2"} 0.0
+# HELP api_called_total API调用总次数
+# TYPE api_called_total counter
+api_called_total{api_name="/order/create",status="500"} 1.0
+# HELP api_called_created API调用总次数
+# TYPE api_called_created gauge
+api_called_created{api_name="/order/create",status="500"} 1.7749608710488288e+09
+# HELP cpu_usage_percent CPU使用率百分比
+# TYPE cpu_usage_percent gauge
+cpu_usage_percent{host="host2"} 86.7
+# HELP task_duration_seconds 任务耗时分布
+# TYPE task_duration_seconds histogram
+task_duration_seconds_bucket{le="0.1",task_type="process"} 0.0
+task_duration_seconds_bucket{le="0.5",task_type="process"} 0.0
+task_duration_seconds_bucket{le="1.0",task_type="process"} 0.0
+task_duration_seconds_bucket{le="2.0",task_type="process"} 0.0
+task_duration_seconds_bucket{le="5.0",task_type="process"} 1.0
+task_duration_seconds_bucket{le="+Inf",task_type="process"} 1.0
+task_duration_seconds_count{task_type="process"} 1.0
+task_duration_seconds_sum{task_type="process"} 4.778909880667925
+# HELP task_duration_seconds_created 任务耗时分布
+# TYPE task_duration_seconds_created gauge
+task_duration_seconds_created{task_type="process"} 1.7749608710490782e+09
+# HELP task_processing_seconds 任务处理时间摘要
+# TYPE task_processing_seconds summary
+task_processing_seconds_count{stage="validation"} 1.0
+task_processing_seconds_sum{stage="validation"} 2.3161190599827863
+# HELP task_processing_seconds_created 任务处理时间摘要
+# TYPE task_processing_seconds_created gauge
+task_processing_seconds_created{stage="validation"} 1.7749608758282819e+09
 ```
 
 ## 3. 了解更多

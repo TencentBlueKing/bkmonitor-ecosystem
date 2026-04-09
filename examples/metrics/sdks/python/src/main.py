@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Tencent is pleased to support the open source community by making 蓝鲸智云 - 监控平台 (BlueKing - Monitor) available.
 # Copyright (C) 2017-2025 Tencent. All rights reserved.
 # Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
@@ -49,7 +48,7 @@ def safe_push():
             gateway=API_URL,
             job=JOB,
             registry=registry,
-            grouping_key={"instance": INSTANCE, "language": "python"},
+            grouping_key={"instance": INSTANCE},
             # ❗️❗️【非常重要】将申请到的自定义指标认证令牌（Token）设置为 HTTP 请求头（X-BK-TOKEN），
             # 该步骤将决定数据能否准确被蓝鲸监控平台接收。
             handler=bk_handler,
@@ -71,7 +70,7 @@ def counter_demo():
     status = "200" if random.random() > 0.9 else "500"  # 10%错误率
     api_name = random.choice(["/user/login", "/data/query", "/order/create"])
     api_counter.labels(api_name=api_name, status=status).inc()
-    logger.debug(f"记录API调用: {api_name} | 状态: {status}")
+    logger.info(f"📊 Counter指标 | {api_name} | 状态: {status}")
 
 
 # Gauge类型 - CPU使用率监控
@@ -84,7 +83,7 @@ def gauge_demo():
     host = f"host{random.randint(1, 3)}"
     usage = round(random.uniform(5.0, 95.0), 1)
     cpu_gauge.labels(host=host).set(usage)
-    logger.debug(f"记录CPU使用率: {host} | 使用率: {usage}%")
+    logger.info(f"📈 Gauge指标 | {host} | 使用率: {usage}%")
 
 
 # Histogram类型 - 任务耗时分布
@@ -106,7 +105,7 @@ def histogram_demo():
     # 自动计时并分桶统计
     with task_histogram.labels(task_type=task_type).time():
         time.sleep(duration)
-    logger.debug(f"记录任务耗时: {task_type} | 耗时: {duration:.2f}s")
+    logger.info(f"⏱️  Histogram指标 | {task_type} | 耗时: {duration:.2f}s")
 
 
 # Summary类型 - 处理时间摘要
@@ -119,7 +118,7 @@ def summary_demo():
     stage = random.choice(["validation", "execution", "cleanup"])
     duration = random.uniform(0.1, 3.0)
     process_summary.labels(stage=stage).observe(duration)
-    logger.debug(f"记录处理阶段: {stage} | 耗时: {duration:.2f}s")
+    logger.info(f"⚡ Summary指标 | {stage} | 耗时: {duration:.2f}s")
 
 
 # ===== 主执行逻辑 =====
@@ -127,7 +126,7 @@ def summary_demo():
 
 def main():
     """主执行函数 -  同时支持Pull模式与Push模式"""
-    start_http_server(METRICS_PORT)
+    start_http_server(METRICS_PORT, registry=registry)
     logger.info(f"已启用Pull模式 | 指标端点: http://127.0.0.1:{METRICS_PORT}/metrics")
 
     logger.info(f"启动指标上报服务 | 实例: {INSTANCE} | 任务: {JOB}")
