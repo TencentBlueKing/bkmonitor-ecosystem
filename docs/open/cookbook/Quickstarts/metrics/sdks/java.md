@@ -79,8 +79,8 @@ private static void safePushMetrics() {
             .job(JOB)
             .groupingKey("instance", INSTANCE);
 
-    // ❗️❗️【非常重要】注入 `TOKEN`。
-    if (TOKEN != null && !TOKEN.isEmpty()) {
+    // ❗️❗️【非常重要】注入 TOKEN
+    if (!TOKEN.isEmpty()) {
         builder.basicAuth("bkmonitor", TOKEN);
     }
     PushGateway pushGateway = builder.build();
@@ -141,6 +141,7 @@ private static final Counter requestsTotal = Counter.builder()
 
 private static void simulateRequestCount() {
     requestsTotal.labelValues("v1", "v2").inc();
+    logger.info("📊 Counter指标 | requests_total | k1=v1, k2=v2");
 }
 ```
 
@@ -162,10 +163,11 @@ private static final Gauge activeRequests = Gauge.builder()
 
 private static void simulateActiveRequests() {
     activeRequests.labelValues("/api/v1/users").inc();
+    logger.info("📈 Gauge指标 | active_requests | /api/v1/users +1");
     // 模拟程序执行耗时
     randomDelaySomeTime();
     activeRequests.labelValues("/api/v1/users").dec();
-
+    logger.info("📈 Gauge指标 | active_requests | /api/v1/users -1");
 }
 ```
 
@@ -190,9 +192,10 @@ private static void simulateTaskDuration() {
     long start = System.nanoTime();
     // 模拟程序执行耗时
     randomDelaySomeTime();
+    double duration = Unit.nanosToSeconds(System.nanoTime() - start);
     taskDuration.labelValues("GET", "/", "200", "v1")
-            .observe(Unit.nanosToSeconds(System.nanoTime() - start));
-
+            .observe(duration);
+    logger.info(String.format("⏱️  Histogram指标 | task_execute_duration | 耗时: %.3fs", duration));
 }
 ```
 
@@ -218,9 +221,10 @@ private static void simulateRequestLatency() {
     long start = System.nanoTime();
     // 模拟程序执行耗时
     randomDelaySomeTime();
+    double latency = Unit.nanosToSeconds(System.nanoTime() - start);
     requestLatency.labelValues("GET", "/users")
-            .observe(Unit.nanosToSeconds(System.nanoTime() - start));
-
+            .observe(latency);
+    logger.info(String.format("⚡ Summary指标 | http_request_latency | GET /users | 耗时: %.3fs", latency));
 }
 ```
 
@@ -263,13 +267,34 @@ public class Main {
 
     private static final Logger logger = Logger.getLogger(Main.class.getName());
 
-    // 环境变量配置
-    private static final String TOKEN = System.getenv("TOKEN");        // ❗️❗️【非常重要】请填写为申请到的自定义指标认证令牌（`Token`）。
-    private static final String API_URL = System.getenv("API_URL");        // ❗️❗️【非常重要】数据上报地址，请根据页面指引提供的接入地址进行填写。
-    private static final String JOB = System.getenv("JOB") != null ? System.getenv("JOB") : "default_monitor_job";
-    private static final String INSTANCE = System.getenv("INSTANCE") != null ? System.getenv("INSTANCE") : "127.0.0.1";
-    private static final int INTERVAL = System.getenv("INTERVAL") != null ? Integer.parseInt(System.getenv("INTERVAL")) : 60;
-    private static final int METRICS_PORT = System.getenv("METRICS_PORT") != null ? Integer.parseInt(System.getenv("METRICS_PORT")) : 9400;
+    // ==================== 环境变量读取辅助方法 ====================
+    private static String getEnv(String key, String defaultValue) {
+        String value = System.getenv(key);
+        return (value != null && !value.isEmpty()) ? value : defaultValue;
+    }
+
+    private static int getEnvAsInt(String key, int defaultValue) {
+        String value = System.getenv(key);
+        if (value != null && !value.isEmpty()) {
+            try {
+                return Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                return defaultValue;
+            }
+        }
+        return defaultValue;
+    }
+
+    // ==================== 配置信息 ====================
+    // ❗️❗️【非常重要】请填写为申请到的自定义指标认证令牌（Token）
+    private static final String TOKEN = getEnv("TOKEN", "");
+    // ❗️❗️【非常重要】数据上报地址，请根据页面指引提供的接入地址进行填写
+    private static final String API_URL = getEnv("API_URL", "")
+            .replaceFirst("^https?://", "");
+    private static final String JOB = getEnv("JOB", "default_monitor_job");       // 任务名称
+    private static final String INSTANCE = getEnv("INSTANCE", "127.0.0.1");       // 实例名称
+    private static final int INTERVAL = getEnvAsInt("INTERVAL", 60);              // 上报间隔，默认60秒
+    private static final int METRICS_PORT = getEnvAsInt("METRICS_PORT", 2323);    // 默认2323端口暴露/metrics端点
 
     private static void randomDelaySomeTime() {
         try {
@@ -290,6 +315,7 @@ public class Main {
 
     private static void simulateRequestCount() {
         requestsTotal.labelValues("v1", "v2").inc();
+        logger.info("📊 Counter指标 | requests_total | k1=v1, k2=v2");
     }
 
     // ===== 仪表盘相关 =====
@@ -303,10 +329,11 @@ public class Main {
 
     private static void simulateActiveRequests() {
         activeRequests.labelValues("/api/v1/users").inc();
+        logger.info("📈 Gauge指标 | active_requests | /api/v1/users +1");
         // 模拟程序执行耗时
         randomDelaySomeTime();
         activeRequests.labelValues("/api/v1/users").dec();
-
+        logger.info("📈 Gauge指标 | active_requests | /api/v1/users -1");
     }
 
     // ===== 直方图相关 =====
@@ -323,9 +350,10 @@ public class Main {
         long start = System.nanoTime();
         // 模拟程序执行耗时
         randomDelaySomeTime();
+        double duration = Unit.nanosToSeconds(System.nanoTime() - start);
         taskDuration.labelValues("GET", "/", "200", "v1")
-                .observe(Unit.nanosToSeconds(System.nanoTime() - start));
-
+                .observe(duration);
+        logger.info(String.format("⏱️  Histogram指标 | task_execute_duration | 耗时: %.3fs", duration));
     }
 
     // ===== 摘要相关 =====
@@ -343,9 +371,10 @@ public class Main {
         long start = System.nanoTime();
         // 模拟程序执行耗时
         randomDelaySomeTime();
+        double latency = Unit.nanosToSeconds(System.nanoTime() - start);
         requestLatency.labelValues("GET", "/users")
-                .observe(Unit.nanosToSeconds(System.nanoTime() - start));
-
+                .observe(latency);
+        logger.info(String.format("⚡ Summary指标 | http_request_latency | GET /users | 耗时: %.3fs", latency));
     }
 
     // ===== 推送指标相关 =====
@@ -359,8 +388,8 @@ public class Main {
                 .job(JOB)
                 .groupingKey("instance", INSTANCE);
 
-        // ❗️❗️【非常重要】注入 `TOKEN`。
-        if (TOKEN != null && !TOKEN.isEmpty()) {
+        // ❗️❗️【非常重要】注入 TOKEN
+        if (!TOKEN.isEmpty()) {
             builder.basicAuth("bkmonitor", TOKEN);
         }
         PushGateway pushGateway = builder.build();
@@ -375,7 +404,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         // 检查必要环境变量
-        if (API_URL == null || API_URL.isEmpty()) {
+        if (API_URL.isEmpty()) {
             throw new IllegalArgumentException("API_URL 环境变量必须设置");
         }
 
@@ -391,7 +420,7 @@ public class Main {
         logger.info("主执行函数 - 同时支持Pull模式与Push模式");
         logger.info("已启用Pull模式 | 指标端点: http://127.0.0.1:" + METRICS_PORT + "/metrics");
         logger.info("启动指标上报服务 | 实例: " + INSTANCE + " | 任务: " + JOB);
-        logger.info("目标地址: " + API_URL + " | 认证令牌: " + (TOKEN != null && !TOKEN.isEmpty() ? "已配置" : "未配置"));
+        logger.info("目标地址: " + API_URL + " | 认证令牌: " + (!TOKEN.isEmpty() ? "已配置" : "未配置"));
         logger.info("上报间隔: " + INTERVAL + "秒");
 
         // 模拟指标更新并推送
@@ -425,7 +454,7 @@ public class Main {
 ```java
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 
-private static final int METRICS_PORT = System.getenv("METRICS_PORT") != null ? Integer.parseInt(System.getenv("METRICS_PORT")) : 9400;  // 默认 9400 端口暴露 /metrics 端点
+private static final int METRICS_PORT = getEnvAsInt("METRICS_PORT", 2323);  // 默认 2323 端口暴露 /metrics 端点
 
 public static void main(String[] args) throws Exception {
 
@@ -446,7 +475,7 @@ public static void main(String[] args) throws Exception {
 ```bash
 docker build -t metrics-sdk-java .
 
-docker run -d -p 2323:2323 --name sdk-pull-java metrics-sdk-java
+docker run -d -p 2323:2323 -e METRICS_PORT=2323 --name sdk-pull-java metrics-sdk-java
 ```
 
 获取指标：

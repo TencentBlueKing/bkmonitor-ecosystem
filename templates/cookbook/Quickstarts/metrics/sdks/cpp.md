@@ -337,10 +337,10 @@ class Config {
 
   Config() {
     // ❗️❗️【非常重要】请填写为申请到的自定义指标认证令牌（`Token`）。
-    token = getEnv("TOKEN", "fixme");
+    token = getEnv("TOKEN", "");
     // ❗️❗️【非常重要】数据上报地址，请根据页面指引提供的接入地址进行填写。
-    api_url = getEnv("API_URL", "fixme");
-    job = getEnv("JOB", "cpp_monitor");    // 任务名称
+    api_url = getEnv("API_URL", "");
+    job = getEnv("JOB", "default_monitor_job");    // 任务名称
     instance = getEnv("INSTANCE", "127.0.0.1");  // 实例名称
     interval = getEnvInt("INTERVAL", 60);    // 上报间隔，默认60秒
     metrics_port = getEnvInt("METRICS_PORT", 2323);  // 默认2323端口暴露/metrics端点
@@ -560,7 +560,7 @@ public:
         std::string addr = "0.0.0.0:" + std::to_string(config.metrics_port);
         exposer = std::make_unique<prometheus::Exposer>(addr);
         exposer->RegisterCollectable(registry);
-        std::cout << "🌐 Pull模式启动: http://" << addr << "/metrics" << std::endl;
+        std::cout << "Pull模式启动: http://" << addr << "/metrics" << std::endl;
     ...
 ```
 
@@ -568,7 +568,7 @@ public:
 
 ```bash
 docker build -t metrics-sdk-cpp .
-docker run -p 2323:2323 --name sdk-pull-cpp metrics-sdk-cpp
+docker run -p 2323:2323 -e METRICS_PORT=2323 --name sdk-pull-cpp metrics-sdk-cpp
 ```
 
 获取指标：

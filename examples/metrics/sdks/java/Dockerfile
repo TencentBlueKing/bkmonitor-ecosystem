@@ -21,6 +21,7 @@ ENV JOB="fixme" \
     INTERVAL="60" \
     METRICS_PORT=2323
 
-EXPOSE 8080
+# 暴露指标端口
+EXPOSE $METRICS_PORT
 
 CMD ["gradle", "run"]
