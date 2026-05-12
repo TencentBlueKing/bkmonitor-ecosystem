@@ -50,7 +50,7 @@ npm install @opentelemetry/exporter-trace-otlp-http@0.204.0 @opentelemetry/expor
 # refer: https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/auto-instrumentations-node
 npm install @opentelemetry/auto-instrumentations-node@0.62.2
 ```
-* OpenTelemetry `0.206.0` 及以上版本会引入新的 `flags` 字段，而当前 bk-collector 接收端暂未完成对应的 PB 兼容，建议先固定为以下已验证版本，避免安装到 `>= 0.206.0` 的版本。
+* OpenTelemetry `0.206.0` 及以上版本会引入新的 `flags` 字段，而当前 bk-collector 接收端暂未完成对应的 PB 兼容，建议先固定为以上已验证版本，避免安装到 `>= 0.206.0` 的版本。
 
 #### 2.3.1 上报地址 & 应用 Token
 
