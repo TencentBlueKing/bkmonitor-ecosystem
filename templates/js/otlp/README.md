@@ -43,13 +43,14 @@ OpenTelemetry 提供标准化的框架和工具包，用于创建和管理 Trace
 本样例通过 <a href="https://www.npmjs.com/package/@opentelemetry/sdk-node" target="_blank">OpenTelemetry SDK for Node.js</a> 进行接入，需安装以下依赖：
 
 ```shell
-npm install @opentelemetry/api @opentelemetry/resources @opentelemetry/semantic-conventions
-npm install @opentelemetry/sdk-node @opentelemetry/sdk-metrics @opentelemetry/sdk-logs @opentelemetry/api-logs
-npm install @opentelemetry/exporter-trace-otlp-http @opentelemetry/exporter-metrics-otlp-http @opentelemetry/exporter-logs-otlp-http
+npm install @opentelemetry/api@1.9.0 @opentelemetry/resources@2.1.0 @opentelemetry/semantic-conventions@1.37.0
+npm install @opentelemetry/sdk-node@0.204.0 @opentelemetry/sdk-metrics@2.1.0 @opentelemetry/sdk-logs@0.204.0 @opentelemetry/api-logs@0.204.0
+npm install @opentelemetry/exporter-trace-otlp-http@0.204.0 @opentelemetry/exporter-metrics-otlp-http@0.204.0 @opentelemetry/exporter-logs-otlp-http@0.204.0
 # 自动埋点，支持 express、socket.io、mysql2、mongodb 等常用库。
 # refer: https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/auto-instrumentations-node
-npm install @opentelemetry/auto-instrumentations-node
+npm install @opentelemetry/auto-instrumentations-node@0.62.2
 ```
+* OpenTelemetry `0.206.0` 及以上版本会引入新的 `flags` 字段，而当前 bk-collector 接收端暂未完成对应的 PB 兼容，建议先固定为以下已验证版本，避免安装到 `>= 0.206.0` 的版本。
 
 #### 2.3.1 上报地址 & 应用 Token
 
