@@ -7,6 +7,7 @@
 // specific language governing permissions and limitations under the License.
 
 #include <cstdlib>
+#include <cpr/cpr.h>
 
 #include <chrono>
 #include <iomanip>
@@ -15,7 +16,6 @@
 #include <string>
 #include <thread>
 
-#include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
