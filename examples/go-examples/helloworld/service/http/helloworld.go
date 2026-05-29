@@ -184,6 +184,8 @@ func HelloWorld(w http.ResponseWriter, req *http.Request) {
 	tracesSetCustomSpanAttributes(ctx)
 	// Traces（调用链）- Span 事件
 	tracesSpanEventDemo(ctx)
+	// Traces（调用链）- Span Links
+	tracesSpanLinksDemo(ctx)
 	// Traces（调用链）- 模拟错误
 	if err := tracesRandomErrorDemo(ctx, span); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -343,6 +345,36 @@ func tracesSpanEventDemo(ctx context.Context) {
 	span.AddEvent("Before doSomething", opt)
 	doSomething(50)
 	span.AddEvent("After doSomething", opt)
+}
+
+// tracesSpanLinksDemo Traces（调用链）- Span Links
+// Refer: https://opentelemetry.io/docs/specs/otel/trace/api/#specifying-links
+func tracesSpanLinksDemo(ctx context.Context) {
+	callerCtx, span := tracer.Start(ctx, "SpanLinkDemo/asyncCaller", trace.WithSpanKind(trace.SpanKindProducer))
+	defer span.End()
+
+	fanoutCount := rand.Intn(3)
+	for linkIndex := 1; linkIndex <= fanoutCount; linkIndex++ {
+		parentLink := trace.LinkFromContext(
+			callerCtx,
+			attribute.String("relation.step", "SpanLinkDemo"),
+			attribute.Int("relation.index", linkIndex),
+		)
+		go tracesSpanLinkAsyncCalleeDemo(context.Background(), linkIndex, parentLink)
+	}
+}
+
+func tracesSpanLinkAsyncCalleeDemo(ctx context.Context, linkIndex int, parentLink trace.Link) {
+	ctx, span := tracer.Start(
+		ctx,
+		fmt.Sprintf("SpanLinkDemo/asyncCallee/%d", linkIndex),
+		trace.WithSpanKind(trace.SpanKindConsumer),
+		trace.WithNewRoot(),
+		trace.WithLinks(parentLink),
+	)
+	defer span.End()
+
+	tracesCustomSpanDemo(ctx)
 }
 
 // tracesRandomErrorDemo Traces（调用链）- 异常事件、状态

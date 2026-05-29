@@ -131,8 +131,12 @@ func HelloWorld(w http.ResponseWriter, req *http.Request) {
 
 	// Traces（调用链）- 自定义 Span
 	tracesCustomSpanDemo(ctx)
+	// Traces（调用链）- 在当前 Span 上设置自定义属性
+	tracesSetCustomSpanAttributes(ctx)
 	// Traces（调用链）- Span 事件
 	tracesSpanEventDemo(ctx)
+	// Traces（调用链）- Span Links
+	tracesSpanLinksDemo(ctx)
 	// Traces（调用链）- 模拟错误
 	if err := tracesRandomErrorDemo(ctx, span); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -257,7 +261,48 @@ func tracesSpanEventDemo(ctx context.Context) {
 
 * <a href="https://opentelemetry.io/docs/languages/go/instrumentation/#events" target="_blank">Span Events</a>
 
-#### 3.1.5 记录错误
+#### 3.1.5 设置 Links
+
+Links 用于在当前 Span 和其他 Span 之间建立关联，适合表达异步调用、批处理等不适合用父子关系承载的场景。
+
+示例中 `SpanLinkDemo/asyncCaller` 表示异步主调，协程内的 `SpanLinkDemo/asyncCallee/<link 编号>` 表示异步被调。
+
+异步主调 Span 每次随机扇出 `0`～`2` 个异步任务。每个异步被调 Span 作为新 trace 启动，并通过 Link 指回触发它的主调 Span。
+
+```go
+// tracesSpanLinksDemo Traces（调用链）- Span Links
+func tracesSpanLinksDemo(ctx context.Context) {
+	fanoutCount := rand.Intn(3)
+	callerCtx, span := tracer.Start(ctx, "SpanLinkDemo/asyncCaller", trace.WithSpanKind(trace.SpanKindProducer))
+	defer span.End()
+
+	for linkIndex := 1; linkIndex <= fanoutCount; linkIndex++ {
+		parentLink := trace.LinkFromContext(
+			callerCtx,
+			attribute.String("relation.step", "SpanLinkDemo"),
+			attribute.Int("relation.index", linkIndex),
+		)
+		go tracesSpanLinkAsyncCalleeDemo(context.Background(), linkIndex, parentLink)
+	}
+}
+
+func tracesSpanLinkAsyncCalleeDemo(ctx context.Context, linkIndex int, parentLink trace.Link) {
+	ctx, span := tracer.Start(
+		ctx,
+		fmt.Sprintf("SpanLinkDemo/asyncCallee/%d", linkIndex),
+		trace.WithSpanKind(trace.SpanKindConsumer),
+		trace.WithNewRoot(),
+		trace.WithLinks(parentLink),
+	)
+	defer span.End()
+
+	tracesCustomSpanDemo(ctx)
+}
+```
+
+* <a href="https://opentelemetry.io/docs/specs/otel/trace/api/#specifying-links" target="_blank">Specifying links</a>
+
+#### 3.1.6 记录错误
 
 当一个 Span 出现错误，可以对其进行错误记录。
 
@@ -273,7 +318,7 @@ func tracesRandomErrorDemo(ctx context.Context, span trace.Span) error {
 
 * <a href="https://opentelemetry.io/docs/languages/go/instrumentation/#record-errors" target="_blank">Record errors</a>
 
-#### 3.1.6 设置状态
+#### 3.1.7 设置状态
 
 当一个 Span 未能成功，可以通过设置状态进行显式标记。
 
@@ -282,7 +327,7 @@ span.SetStatus(codes.Error, err.Error())
 ```
 * <a href="https://opentelemetry.io/docs/languages/go/instrumentation/#set-span-status" target="_blank">Set span status</a>
 
-#### 3.1.7 在当前 Span 上设置自定义属性
+#### 3.1.8 在当前 Span 上设置自定义属性
 
 在部分场景下，Span 可能在框架入口、中间件等位置便被创建，如果你希望在当前的 Span 设置属性，而不是新创建一个 Span，可以通过以下方式进行：
 

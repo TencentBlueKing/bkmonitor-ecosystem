@@ -53,8 +53,12 @@ func HelloWorld(w http.ResponseWriter, req *http.Request) {
 
 	// Traces（调用链）- 自定义 Span
 	tracesCustomSpanDemo(ctx)
+	// Traces（调用链）- 在当前 Span 上设置自定义属性
+	tracesSetCustomSpanAttributes(ctx)
 	// Traces（调用链）- Span 事件
 	tracesSpanEventDemo(ctx)
+	// Traces（调用链）- Span Links
+	tracesSpanLinksDemo(ctx)
 	// Traces（调用链）- 模拟错误
 	if err := tracesRandomErrorDemo(ctx, span); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
