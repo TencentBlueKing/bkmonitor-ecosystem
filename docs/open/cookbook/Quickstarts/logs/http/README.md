@@ -175,6 +175,50 @@ curl -sS -X POST "${API_URL}" \
 
 如超过频率限制，请联系`蓝鲸助手`调整。
 
+#### 2.3.1 Resources
+
+Resources 代表负责生成日志数据的实体，这些实体作为资源属性被记录下来。例如，一个在 Kubernetes 容器中的进程可能有服务名、命名空间、Pod 名称和容器名称等属性。
+
+常见 Resources 字段：
+
+* `service.name`：服务唯一标识，一个应用可以有多个服务，通过该属性区分。
+
+* `deployment.environment.name`：部署环境，例如 `prod`、`staging`。
+
+* `k8s.pod.name`：Kubernetes Pod 名称，用于定位具体运行实例。
+
+参考：<a href="https://opentelemetry.io/docs/concepts/resources/" target="_blank">OpenTelemetry Resources</a>。
+
+#### 2.3.2 Attributes
+
+Attributes 是某条日志事件自身的附加信息，适合记录请求方法、接口路径、错误类型、业务 ID 等会随日志事件变化的字段。
+
+Resources 描述“谁产生日志”，Attributes 描述“这条日志发生了什么”。
+
+参考：<a href="https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-attributes" target="_blank">OpenTelemetry Logs Data Model - Attributes</a>。
+
+#### 2.3.3 severityNumber
+
+`severityNumber` 是 OpenTelemetry 对日志级别的标准化数值。数值越大，日志越严重。
+
+| 范围 | 名称 | 含义 |
+| --- | --- | --- |
+| `0` | UNSPECIFIED | 未指定级别。 |
+| `1`～`4` | TRACE | 细粒度调试事件。 |
+| `5`～`8` | DEBUG | 调试事件。 |
+| `9`～`12` | INFO | 普通信息事件。 |
+| `13`～`16` | WARN | 警告事件。 |
+| `17`～`20` | ERROR | 错误事件。 |
+| `21`～`24` | FATAL | 致命错误。 |
+
+参考：<a href="https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitynumber" target="_blank">OpenTelemetry Logs Data Model - SeverityNumber</a>。
+
+#### 2.3.4 TraceID & SpanID
+
+`traceId` 和 `spanId` 用于把日志与链路追踪关联起来。请求处理过程中产生的日志建议带上这两个字段，这样排查问题时可以从日志跳转到 Trace，或从 Trace 定位相关日志。
+
+参考：<a href="https://opentelemetry.io/docs/specs/otel/logs/data-model/#trace-context-fields" target="_blank">OpenTelemetry Logs Data Model - Trace Context Fields</a>。
+
 ## 3. 快速接入
 
 ### 3.1 数据上报示例
