@@ -31,7 +31,9 @@ HTTP 上报适合应用侧主动发送日志的场景。容器日志采集适合
 
 ### 2.2 上报速率限制
 
-OTLP 日志上报注意 API 频率限制 5w/s。
+OTLP 日志上报注意 API 频率限制 50,000 条/s。
+
+如超过频率限制，请联系`蓝鲸助手`调整。
 
 ### 2.3 数据协议
 
@@ -127,11 +129,10 @@ OTLP/HTTP 日志上报使用 HTTP POST 请求。默认日志上报路径为 `/v1
 ```shell
 #!/bin/bash
 # ❗❗【非常重要】认证令牌，用于接口鉴权，请替换为页面提供的日志数据源 Token。
-TOKEN="fixme:替换为申请到的 Token"
+TOKEN="fixme"
 
-# ❗❗【非常重要】日志上报接口地址，请替换为页面接入指引提供的 Access URL。
-# 如果页面提供的是 OTLP HTTP Endpoint 根地址，请在末尾追加 /v1/logs。
-API_URL="fixme:替换为页面提供的 OTLP HTTP 上报地址，例如 http://127.0.0.1:4318/v1/logs"
+# ❗❗【非常重要】上报地址，国内站点默认是「{{access_config.otlp.http_endpoint}}/v1/logs」，其他环境、跨云场景请根据页面接入指引填写。
+API_URL="{{access_config.otlp.http_endpoint}}/v1/logs"
 
 TIME_UNIX_NANO="$(($(date +%s) * 1000000000))"
 
@@ -172,8 +173,6 @@ curl -sS -X POST "${API_URL}" \
   -H "x-bk-token: ${TOKEN}" \
   -d "${REPORT_DATA}"
 ```
-
-如超过频率限制，请联系`蓝鲸助手`调整。
 
 #### 2.3.1 Resources
 
