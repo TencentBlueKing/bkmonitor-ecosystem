@@ -475,10 +475,10 @@ class DocsAccessConfig(metaclass=base.FieldMeta):
                 "Container_events": "#",
             },
             "logs": {
-                "learn_search":"#",
+                "learn_search": "#",
                 "container_custom_report": "#",
-                "container_collector_install":"#",
-                "faq_no_data":"#",
+                "container_collector_install": "#",
+                "faq_no_data": "#",
                 "http": {
                     "readme": {
                         "http_python": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/logs/http/python.md",
