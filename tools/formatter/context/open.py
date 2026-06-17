@@ -481,6 +481,7 @@ class DocsAccessConfig(metaclass=base.FieldMeta):
                 "faq_no_data": "#",
                 "http": {
                     "readme": {
+                        "http_logs_report": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/logs/http/README.md",
                         "http_python": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/logs/http/python.md",
                         "http_c": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/logs/http/cpp.md",
                         "http_java": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/logs/http/java.md",
