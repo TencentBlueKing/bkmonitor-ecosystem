@@ -6,101 +6,104 @@
 # an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations under the License.
 
-import json
 import logging
 import os
-import signal
-import sys
+import random
 import time
-from datetime import datetime, timezone
 
 import requests
 
-# ❗❗【非常重要】上报地址，国内站点默认是「{{access_config.otlp.http_endpoint}}/v1/logs」，
-# 其他环境、跨云场景请根据页面接入指引填写
-API_URL = os.environ.get("API_URL", "{{access_config.otlp.http_endpoint}}/v1/logs")
-# ❗❗【非常重要】认证令牌，用于接口鉴权，请替换为页面提供的日志数据源 Token。
-TOKEN = os.environ.get("TOKEN", "fixme")
-
-
-# 日志格式
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
-if not API_URL.startswith("http"):
-    logging.warning("API_URL 环境变量未设置或格式不正确，使用默认值: %s", API_URL)
-if not TOKEN:
-    logging.warning("TOKEN 环境变量未设置，请求头中将不携带 X-BK-TOKEN")
+# ---------- 日志级别映射 ----------
+LOG_LEVELS = [
+    {"severityNumber": 5, "severityText": "DEBUG", "message": "debug log from python http"},
+    {"severityNumber": 9, "severityText": "INFO", "message": "info log from python http"},
+    {"severityNumber": 13, "severityText": "WARN", "message": "warn log from python http"},
+    {"severityNumber": 17, "severityText": "ERROR", "message": "error log from python http"},
+]
 
 
 def get_current_nano_timestamp() -> str:
     """返回当前UTC时间的纳秒级Unix时间戳字符串"""
-    now = datetime.now(timezone.utc)
-    nano = int(now.timestamp() * 1_000_000_000)
-    return str(nano)
+    return str(int(time.time() * 1_000_000_000))
 
 
-def build_payload() -> bytes:
-    """
-    读取 logs.json 模板，更新其中的 timeUnixNano 和 observedTimeUnixNano，
-    返回 JSON 字节串
-    """
-    try:
-        with open("logs.json", "r", encoding="utf-8") as f:
-            payload = json.load(f)
-    except FileNotFoundError:
-        logging.error("logs.json not found")
-        sys.exit(1)
+def get_random_level() -> dict:
+    """随机返回一个日志级别，用于演示 DEBUG、INFO、WARN、ERROR 日志上报。"""
+    return random.choice(LOG_LEVELS)
 
+
+def build_payload() -> dict:
+    """构造 OTLP LogRecord 请求体"""
     current_nano = get_current_nano_timestamp()
+    level = get_random_level()
 
-    for rl in payload.get("resourceLogs", []):
-        for sl in rl.get("scopeLogs", []):
-            for lr in sl.get("logRecords", []):
-                lr["timeUnixNano"] = current_nano
-                lr["observedTimeUnixNano"] = current_nano
+    return {
+        "resourceLogs": [
+            {
+                "resource": {
+                    "attributes": [
+                        {"key": "service.name", "value": {"stringValue": "custom-log-demo"}},
+                        {"key": "deployment.environment.name", "value": {"stringValue": "local"}},
+                    ]
+                },
+                "scopeLogs": [
+                    {
+                        "scope": {"name": "python-http-demo"},
+                        "logRecords": [
+                            {
+                                "timeUnixNano": current_nano,
+                                "observedTimeUnixNano": current_nano,
+                                "severityNumber": level["severityNumber"],
+                                "severityText": level["severityText"],
+                                "body": {"stringValue": level["message"]},
+                                "attributes": [
+                                    {"key": "demo.source", "value": {"stringValue": "python"}},
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            }
+        ]
+    }
 
-    # 去除多余空格
-    return json.dumps(payload, separators=(",", ":")).encode("utf-8")
 
+def do_post(payload: dict) -> None:
+    log_record = payload["resourceLogs"][0]["scopeLogs"][0]["logRecords"][0]
+    logging.info("Sending log level: %s (%s)", log_record["severityText"], log_record["severityNumber"])
 
-def do_post(data: bytes):
-    """发送 POST 请求"""
+    # ❗❗【非常重要】认证令牌，用于接口鉴权，请替换为页面提供的日志数据源 Token。
+    token = os.environ.get("TOKEN", "fixme")
+    # ❗❗【非常重要】上报地址，国内站点默认是「{{access_config.otlp.http_endpoint}}/v1/logs」，
+    # 其他环境、跨云场景请根据页面接入指引填写
+    api_url = os.environ.get("API_URL", "{{access_config.otlp.http_endpoint}}/v1/logs")
+
     headers = {
         "Content-Type": "application/json",
+        "x-bk-token": token,
     }
-    if TOKEN:
-        headers["X-BK-TOKEN"] = TOKEN
 
     try:
-        resp = requests.post(API_URL, data=data, headers=headers, timeout=10)
-        logging.info(f"response.status_code={resp.status_code}, body={resp.text}")
+        resp = requests.post(api_url, json=payload, headers=headers, timeout=10)
+        logging.info("response.status_code=%s, body=%s", resp.status_code, resp.text)
     except requests.RequestException as e:
-        logging.error(f"failed to post request: {e}")
+        logging.error("failed to post request: %s", e)
 
 
 def main():
-    stop_flag = False
-
-    def signal_handler(sig, frame):
-        nonlocal stop_flag
-        logging.info("Received interrupt signal, exiting...")
-        stop_flag = True
-
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-
-    while not stop_flag:
-        payload_bytes = build_payload()
-        do_post(payload_bytes)
-
-        # 每3秒发送一次，分段睡眠以快速响应信号
-        for _ in range(30):
-            if stop_flag:
-                break
-            time.sleep(0.1)
+    logging.info("Starting log reporter (press Ctrl+C to stop)...")
+    try:
+        while True:
+            payload = build_payload()
+            do_post(payload)
+            time.sleep(0.1)  # 每 0.1 秒上报一条随机级别的日志
+    except KeyboardInterrupt:
+        logging.info("Received keyboard interrupt, exiting...")
 
 
 if __name__ == "__main__":
