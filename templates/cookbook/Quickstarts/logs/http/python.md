@@ -4,6 +4,8 @@
 
 ### 1.1 术语介绍
 
+* <a href="{{docs.logs.http.readme.http_logs_report}}" target="_blank">自定义日志 HTTP 上报</a>
+
 * <a href="https://opentelemetry.io/" target="_blank"> opentelemetry 官方文档</a>
 
 ### 1.2 开发环境要求
@@ -29,7 +31,7 @@ cd {{ECOSYSTEM_REPOSITORY_NAME}}/examples/logs/http/python
 
 * `TOKEN`：日志数据源 Token，上报时必须通过 `x-bk-token` Header 传递。
 
-* `API_URL`：国内站点默认是「{{access_config.otlp.http_endpoint}}/v1/logs」，其他环境、跨云场景请根据页面接入指引填写。
+* `API_URL`：国内站点默认是「 {{access_config.otlp.http_endpoint}}/v1/logs 」，其他环境、跨云场景请根据页面接入指引填写。
 
 ### 2.2 样例运行参数
 
@@ -74,12 +76,10 @@ docker run -e TOKEN="fixme" \
 上报代码示例：
 
 ```python
-import json
 import logging
 import os
 import random
 import time
-from datetime import datetime, timezone
 
 import requests
 
@@ -90,9 +90,9 @@ logging.basicConfig(
 
 # ---------- 日志级别映射 ----------
 LOG_LEVELS = [
-    {"severityNumber": 5,  "severityText": "DEBUG", "message": "debug log from python http"},
-    {"severityNumber": 9,  "severityText": "INFO",  "message": "info log from python http"},
-    {"severityNumber": 13, "severityText": "WARN",  "message": "warn log from python http"},
+    {"severityNumber": 5, "severityText": "DEBUG", "message": "debug log from python http"},
+    {"severityNumber": 9, "severityText": "INFO", "message": "info log from python http"},
+    {"severityNumber": 13, "severityText": "WARN", "message": "warn log from python http"},
     {"severityNumber": 17, "severityText": "ERROR", "message": "error log from python http"},
 ]
 
@@ -149,7 +149,7 @@ def do_post(payload: dict) -> None:
 
     # ❗❗【非常重要】认证令牌，用于接口鉴权，请替换为页面提供的日志数据源 Token。
     token = os.environ.get("TOKEN", "fixme")
-    # ❗❗【非常重要】上报地址，国内站点默认是「{{access_config.otlp.http_endpoint}}/v1/logs」，
+    # ❗❗【非常重要】上报地址，国内站点默认是「 {{access_config.otlp.http_endpoint}}/v1/logs 」，
     # 其他环境、跨云场景请根据页面接入指引填写
     api_url = os.environ.get("API_URL", "{{access_config.otlp.http_endpoint}}/v1/logs")
 

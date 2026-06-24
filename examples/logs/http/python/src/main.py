@@ -79,7 +79,7 @@ def do_post(payload: dict) -> None:
 
     # ❗❗【非常重要】认证令牌，用于接口鉴权，请替换为页面提供的日志数据源 Token。
     token = os.environ.get("TOKEN", "fixme")
-    # ❗❗【非常重要】上报地址，国内站点默认是「{{access_config.otlp.http_endpoint}}/v1/logs」，
+    # ❗❗【非常重要】上报地址，国内站点默认是「 {{access_config.otlp.http_endpoint}}/v1/logs 」，
     # 其他环境、跨云场景请根据页面接入指引填写
     api_url = os.environ.get("API_URL", "{{access_config.otlp.http_endpoint}}/v1/logs")
 
