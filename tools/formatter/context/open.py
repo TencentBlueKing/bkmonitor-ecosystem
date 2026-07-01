@@ -481,18 +481,18 @@ class DocsAccessConfig(metaclass=base.FieldMeta):
                 "faq_no_data": "#",
                 "http": {
                     "readme": {
-                        "http_logs_report": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/logs/http/README.md",
-                        "http_python": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/logs/http/python.md",
-                        "http_c": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/logs/http/cpp.md",
-                        "http_java": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/logs/http/java.md",
-                        "http_go": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/logs/http/go.md",
+                        "http_logs_report": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/http/README.md",
+                        "http_python": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/http/python.md",
+                        "http_c": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/http/cpp.md",
+                        "http_java": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/http/java.md",
+                        "http_go": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/http/go.md",
                     }
                 },
                 "learn": {
-                    "sdk_python": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/logs/sdks/python.md",
-                    "sdk_c": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/logs/sdks/cpp.md",
-                    "sdk_java": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/logs/sdks/java.md",
-                    "sdk_go": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/cookbook/Quickstarts/logs/sdks/go.md",
+                    "sdk_python": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/sdks/python.md",
+                    "sdk_c": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/sdks/cpp.md",
+                    "sdk_java": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/sdks/java.md",
+                    "sdk_go": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/sdks/go.md",
                 },
             },
         }
