@@ -496,3 +496,42 @@ class DocsAccessConfig(metaclass=base.FieldMeta):
                 },
             },
         }
+
+
+class LogsHttpTermIntro(metaclass=base.FieldMeta):
+    class Meta:
+        name = "LOGS_HTTP_TERM_INTRO"
+        scope = base.ScopeType.OPEN.value
+        # 注意：这里使用硬编码 URL，因为 Jinja2 不会对变量值中的 {{...}} 进行二次解析
+        value = """* <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/http/README.md" target="_blank">自定义日志 HTTP 上报</a>
+
+* <a href="https://opentelemetry.io/docs/concepts/signals/logs/" target="_blank">Logs（OTel 日志）</a>：OpenTelemetry 中用于描述离散日志事件的信号类型。
+
+* <a href="https://opentelemetry.io/docs/specs/otel/logs/data-model/" target="_blank">Logs Data Model（OTel 日志数据模型）</a>：定义 `resourceLogs`、`scopeLogs`、`logRecords`、`body`、`attributes`、`severityNumber` 等字段含义。
+
+* <a href="https://opentelemetry.io/docs/specs/otlp/#otlphttp" target="_blank">OTLP/HTTP（OpenTelemetry HTTP 上报协议）</a>：定义通过 HTTP 上报 OTel 数据的协议方式，本示例使用 `/v1/logs` 上报日志。"""
+
+
+class LogsHttpDevRequirements(metaclass=base.FieldMeta):
+    class Meta:
+        name = "LOGS_HTTP_DEV_REQUIREMENTS"
+        scope = base.ScopeType.OPEN.value
+        value = """在开始之前，请确保您已经安装了以下软件：
+
+* Git
+
+* Docker 或者其他平替的容器工具。"""
+
+
+class LogsHttpLearnMore(metaclass=base.FieldMeta):
+    class Meta:
+        name = "LOGS_HTTP_LEARN_MORE"
+        scope = base.ScopeType.OPEN.value
+        # 注意：这里使用硬编码 URL，因为 Jinja2 不会对变量值中的 {{...}} 进行二次解析
+        value = """进一步了解以下内容：
+
+* 进行 <a href="#" target="_blank">日志检索</a>。
+
+* 了解 <a href="#" target="_blank">容器日志自定义上报使用文档</a>。
+
+* 了解 <a href="#" target="_blank">容器日志采集器安装</a>。"""
