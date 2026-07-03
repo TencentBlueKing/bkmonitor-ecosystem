@@ -1,4 +1,4 @@
-ROM konajdk/konajdk:11
+FROM konajdk/konajdk:11
 
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
