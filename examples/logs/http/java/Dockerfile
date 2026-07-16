@@ -21,6 +21,4 @@ RUN gradle build --no-daemon -q
 ENV TOKEN="fixme" \
     API_URL="fixme"
 
-EXPOSE 8080
-
 CMD ["gradle", "run"]
