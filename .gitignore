@@ -356,3 +356,28 @@ bkcodeai.json
 
 .codebuddy
 .gtm.yaml
+
+### AI assistant tools ###
+# Local, per-developer AI tool data / caches / configs — not meant for the repo.
+.workbuddy/
+.codebuddy/
+.claude/
+.cursor/
+.windsurf/
+.continue/
+.aider*
+.gemini/
+.codeium/
+.roo/
+.cline/
+.qodo/
+.specstory/
+.tabnine/
+
+### macOS ###
+# Finder metadata — must never be committed.
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+._*
