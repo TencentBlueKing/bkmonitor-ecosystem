@@ -1,0 +1,26 @@
+[package]
+name = "helloworld-rust"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "helloworld"
+path = "src/lib.rs"
+
+[dependencies]
+axum = "0.8"
+dotenvy = "0.15"
+rand = "0.9"
+reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal", "time"] }
+opentelemetry = "0.32"
+opentelemetry-appender-tracing = "0.32"
+opentelemetry-http = "0.32"
+opentelemetry-otlp = { version = "0.32", default-features = false, features = ["http-proto", "reqwest-blocking-client", "trace", "metrics", "logs"] }
+opentelemetry_sdk = { version = "0.32", features = ["rt-tokio"] }
+tracing = "0.1"
+tracing-opentelemetry = "0.33"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }
