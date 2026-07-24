@@ -9,7 +9,6 @@ path = "src/lib.rs"
 
 [dependencies]
 axum = "0.8"
-dotenvy = "0.15"
 rand = "0.9"
 reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
 tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal", "time"] }

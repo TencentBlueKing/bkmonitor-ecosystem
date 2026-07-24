@@ -1,3 +1,11 @@
+// Tencent is pleased to support the open source community by making 蓝鲸智云 - 监控平台 (BlueKing - Monitor) available.
+// Copyright (C) 2017-2025 Tencent. All rights reserved.
+// Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at http://opensource.org/licenses/MIT
+// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+// an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations under the License.
+
 use std::collections::HashMap;
 
 use opentelemetry::global;
@@ -9,10 +17,9 @@ use opentelemetry_sdk::{
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::config::AppConfig;
-use crate::telemetry::metrics;
+use crate::{config::AppConfig, http::server::metrics_gauge_demo};
 
-/// 持有各信号的 SDK Provider，确保退出时能刷新内存中尚未上报的数据。
+/// TelemetryGuard 定义 OTLP 服务的核心结构。
 pub struct TelemetryGuard {
     tracer_provider: SdkTracerProvider,
     meter_provider: SdkMeterProvider,
@@ -20,10 +27,7 @@ pub struct TelemetryGuard {
 }
 
 impl TelemetryGuard {
-    /// 按 Trace、Metric、Log 的顺序关闭。
-    ///
-    /// Log bridge 仍会记录前两个 Provider 的关闭过程，因此 Log Provider 必须最后关闭，
-    /// 否则会产生“已关闭后仍写日志”的无效告警。
+    /// shutdown 停止 OTLP 服务并清理资源。
     pub fn shutdown(self) {
         let _ = self.tracer_provider.shutdown();
         let _ = self.meter_provider.shutdown();
@@ -31,6 +35,7 @@ impl TelemetryGuard {
     }
 }
 
+/// setup 启动 OTLP 服务并初始化各项功能。
 pub fn setup(config: &AppConfig) -> Result<TelemetryGuard, Box<dyn std::error::Error>> {
     if config.otlp_exporter_type != "http" {
         return Err(format!(
@@ -39,31 +44,27 @@ pub fn setup(config: &AppConfig) -> Result<TelemetryGuard, Box<dyn std::error::E
         )
         .into());
     }
-    // 使用 W3C TraceContext 格式在 HTTP 请求头中传递上下文。
-    // 这会让内置 Client 的 Span 与 Server 的 Handle/HelloWorld Span 形成父子关系。
     global::set_text_map_propagator(TraceContextPropagator::new());
 
-    // 三种信号共享同一 Resource，平台据此将数据归属到指定服务。
-    // ❗❗【非常重要】SERVICE_NAME 必须与 APM 应用中的服务标识保持一致。
     let resource = Resource::builder()
+        // ❗❗【非常重要】应用服务唯一标识
         .with_service_name(config.service_name.clone())
         .build();
-    // ❗❗【非常重要】Token 是 bk-collector 的鉴权凭证，不能写入代码或提交到仓库。
-    // 每个 OTLP exporter 都必须携带相同的 x-bk-token 请求头。
     let headers = HashMap::from([("x-bk-token".to_owned(), config.token.clone())]);
 
     let tracer_provider = if config.enable_traces {
-        // OTLP HTTP/protobuf 的完整上报路径为 /v1/traces。
         let exporter = opentelemetry_otlp::SpanExporter::builder()
             .with_http()
             .with_protocol(Protocol::HttpBinary)
+            // ❗❗【非常重要】数据上报地址，请根据页面指引提供的接入地址进行填写
+            // 格式为 ip:port 或 domain:port，不要带 schema
             .with_endpoint(format!(
-                "{}/v1/traces",
+                "http://{}/v1/traces",
                 config.otlp_endpoint.trim_end_matches('/')
             ))
+            // ❗❗【非常重要】请传入应用 Token
             .with_headers(headers.clone())
             .build()?;
-        // Batch processor 在后台线程批量发送 Span，不会让 HTTP 业务请求等待网络上报。
         SdkTracerProvider::builder()
             .with_batch_exporter(exporter)
             .with_resource(resource.clone())
@@ -75,17 +76,18 @@ pub fn setup(config: &AppConfig) -> Result<TelemetryGuard, Box<dyn std::error::E
     };
 
     let meter_provider = if config.enable_metrics {
-        // 指标的 OTLP HTTP/protobuf 标准路径为 /v1/metrics。
         let exporter = opentelemetry_otlp::MetricExporter::builder()
             .with_http()
             .with_protocol(Protocol::HttpBinary)
+            // ❗❗【非常重要】数据上报地址，请根据页面指引提供的接入地址进行填写
+            // 格式为 ip:port 或 domain:port，不要带 schema
             .with_endpoint(format!(
-                "{}/v1/metrics",
+                "http://{}/v1/metrics",
                 config.otlp_endpoint.trim_end_matches('/')
             ))
+            // ❗❗【非常重要】请传入应用 Token
             .with_headers(headers.clone())
             .build()?;
-        // Periodic reader 按周期采集并上报，不会阻塞记录指标的 add 调用。
         SdkMeterProvider::builder()
             .with_periodic_exporter(exporter)
             .with_resource(resource.clone())
@@ -97,17 +99,18 @@ pub fn setup(config: &AppConfig) -> Result<TelemetryGuard, Box<dyn std::error::E
     };
 
     let logger_provider = if config.enable_logs {
-        // 日志的 OTLP HTTP/protobuf 标准路径为 /v1/logs。
         let exporter = opentelemetry_otlp::LogExporter::builder()
             .with_http()
             .with_protocol(Protocol::HttpBinary)
+            // ❗❗【非常重要】数据上报地址，请根据页面指引提供的接入地址进行填写
+            // 格式为 ip:port 或 domain:port，不要带 schema
             .with_endpoint(format!(
-                "{}/v1/logs",
+                "http://{}/v1/logs",
                 config.otlp_endpoint.trim_end_matches('/')
             ))
+            // ❗❗【非常重要】请传入应用 Token
             .with_headers(headers)
             .build()?;
-        // 日志先进入 batch 队列，再由后台线程发送给 collector。
         SdkLoggerProvider::builder()
             .with_batch_exporter(exporter)
             .with_resource(resource)
@@ -116,16 +119,13 @@ pub fn setup(config: &AppConfig) -> Result<TelemetryGuard, Box<dyn std::error::E
         SdkLoggerProvider::builder().with_resource(resource).build()
     };
 
-    // 注册全局 Provider，使业务代码可通过 opentelemetry::global 获取统一实例。
     global::set_tracer_provider(tracer_provider.clone());
     global::set_meter_provider(meter_provider.clone());
-    metrics::register_metrics_gauge_demo();
-    // tracing Span 自动转换为 OTel Span；tracing 日志自动桥接为 OTel Log。
+    metrics_gauge_demo();
     let trace_layer =
         tracing_opentelemetry::layer().with_tracer(tracer_provider.tracer("helloworld"));
     let log_layer =
         opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge::new(&logger_provider);
-    // fmt layer 同时保留本地控制台输出，便于未接 collector 时排查接入问题。
     tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer())
         .with(trace_layer)
