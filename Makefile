@@ -36,6 +36,7 @@ render:
 		\
   		cp -f docs/inner/cpp/otlp/README.md examples/cpp-examples/helloworld/README.md; \
 		cp -f docs/inner/js/otlp/README.md examples/js-examples/helloworld/README.md; \
+		cp -f docs/inner/rust/otlp/README.md examples/rust-examples/helloworld/README.md; \
 		cp -f docs/inner/java/otlp/README.md examples/java-examples/helloworld/README.md; \
 		cp -f docs/inner/java/otlp-spring-boot-starter/README.md examples/java-examples/spring-boot-starter/README.md; \
 		cp -f docs/inner/java/skywalking-agent/README.md examples/java-examples/skywalking-agent/README.md; \

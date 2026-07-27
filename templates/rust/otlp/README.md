@@ -59,7 +59,6 @@ let exporter = opentelemetry_otlp::SpanExporter::builder()
     .with_http()
     .with_protocol(Protocol::HttpBinary)
     // ❗❗【非常重要】数据上报地址，请根据页面指引提供的接入地址进行填写。
-    // 示例程序会为无协议的 OTLP_ENDPOINT 补充 http://，并在此追加 /v1/traces。
     .with_endpoint(format!(
         "{}/v1/traces",
         config.otlp_endpoint.trim_end_matches('/')
@@ -106,34 +105,47 @@ async fn hello_world(
     let parent_context = global::get_text_map_propagator(|propagator| {
         propagator.extract(&HeaderExtractor(&headers))
     });
-    let span = tracing::info_span!("Handle/HelloWorld");
+    let span = tracing::info_span!("Handle/HelloWorld", otel.kind = "server");
+    set_http_request_attributes(&span);
     if let Err(error) = span.set_parent(parent_context) {
         tracing::warn!(%error, "设置服务端调用链父上下文失败");
     }
     let _entered = span.enter();
 
     // Logs（日志）
-    logs::logs_demo();
+    logs_demo();
 
     let mut rng = rand::rng();
     let country = COUNTRIES[rng.random_range(0..COUNTRIES.len())];
     tracing::info!(country = country.as_str(), "选择国家");
 
-    // Metrics（指标）
-    metrics::metrics_counter_demo(country.as_str());
-    metrics::metrics_histogram_demo();
+    // Metrics（指标） - Counter 类型
+    metrics_counter_demo(country.as_str());
+    // Metrics（指标） - Histograms 类型
+    metrics_histogram_demo();
+    // Metrics（指标） - 调用分析场景
+    metrics_rpc_demo("server");
+    metrics_rpc_demo("client");
 
-    // Traces（调用链）
-    traces::traces_custom_span_demo();
-    traces::traces_set_custom_span_attributes();
-    traces::traces_span_event_demo();
-    traces::traces_span_links_demo();
+    // Traces（调用链）- 自定义 Span
+    traces_custom_span_demo();
+    // Traces（调用链）- 在当前 Span 上设置自定义属性
+    traces_set_custom_span_attributes();
+    // Traces（调用链）- Span 事件
+    traces_span_event_demo();
+    // Traces（调用链）- Span Links
+    traces_span_links_demo();
+    // Traces（调用链）- 模拟错误
     if rng.random::<f64>() < state.error_rate {
         let error = traces_random_error_demo(&mut rng);
-        return Err((StatusCode::INTERNAL_SERVER_ERROR, error.as_str().to_owned()));
+        let response = Err((StatusCode::INTERNAL_SERVER_ERROR, error.as_str().to_owned()));
+        set_http_response_attributes(&span, StatusCode::INTERNAL_SERVER_ERROR);
+        response
+    } else {
+        let response = Ok(format!("Hello World, {}!", country.as_str()));
+        set_http_response_attributes(&span, StatusCode::OK);
+        response
     }
-
-    Ok(format!("Hello World, {}!", country.as_str()))
 }
 ```
 
@@ -236,18 +248,42 @@ Links 用于在当前 Span 和其他 Span 之间建立关联，适合表达异�
 Link 只表达 Span 之间的关联，不会改变当前 Span 的父子关系。
 
 ```rust
-use opentelemetry::{trace::TraceContextExt, KeyValue};
+use opentelemetry::{trace::TraceContextExt, Context, KeyValue};
+use rand::Rng;
+use tracing::Instrument;
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 
 /// 使用 Span Link 关联异步操作与当前请求。
-pub fn traces_span_links_demo() {
-    let async_span = tracing::info_span!("SpanLinkDemo/asyncCaller");
-    let async_context = async_span.context();
-    tracing::Span::current().add_link_with_attributes(
-        async_context.span().span_context().clone(),
-        vec![KeyValue::new("link_type", "async")],
-    );
-    tracing::info!("SpanLinkDemo async caller");
+fn traces_span_links_demo() {
+    let caller = tracing::info_span!("SpanLinkDemo/asyncCaller", otel.kind = "producer");
+    let caller_context = caller.context();
+
+    let fanout_count = rand::rng().random_range(0_i64..3);
+    for link_index in 1..=fanout_count {
+        let callee = tracing::info_span!(
+            "SpanLinkDemo/asyncCallee",
+            otel.kind = "consumer",
+            relation.index = link_index
+        );
+        if let Err(error) = callee.set_parent(Context::new()) {
+            tracing::warn!(%error, "设置 Span Link Callee 为 Root Trace 失败");
+            continue;
+        }
+        callee.add_link_with_attributes(
+            caller_context.span().span_context().clone(),
+            vec![
+                KeyValue::new("relation.step", "SpanLinkDemo"),
+                KeyValue::new("relation.index", link_index),
+            ],
+        );
+
+        tokio::spawn(
+            async {
+                traces_custom_span_demo();
+            }
+            .instrument(callee),
+        );
+    }
 }
 ```
 
@@ -341,9 +377,9 @@ Histograms（直方图）用于记录数值分布情况。
 ```rust
 use opentelemetry::global;
 
-pub fn metrics_histogram_demo() {
+fn metrics_histogram_demo() {
     let started_at = std::time::Instant::now();
-    do_something();
+    do_something(100);
     global::meter("helloworld")
         .f64_histogram("task_execute_duration_seconds")
         .with_description("Task execute duration in seconds")
@@ -361,18 +397,24 @@ Gauges（仪表）用于记录瞬时值。
 例如，可以通过以下方式，上报当前内存使用率：
 
 ```rust
-use opentelemetry::global;
+use std::sync::OnceLock;
+
+use opentelemetry::{global, metrics::ObservableGauge};
 use rand::Rng;
 
+static MEMORY_USAGE: OnceLock<ObservableGauge<f64>> = OnceLock::new();
+
 /// Metrics（指标）- 使用 ObservableGauge 类型指标。
-pub fn register_metrics_gauge_demo() {
-    global::meter("helloworld")
-        .f64_observable_gauge("memory_usage")
-        .with_description("Memory usage")
-        .with_callback(|observer| {
-            observer.observe(0.1 + rand::rng().random_range(0.0..0.2), &[]);
-        })
-        .build();
+pub(crate) fn metrics_gauge_demo() {
+    MEMORY_USAGE.get_or_init(|| {
+        global::meter("helloworld")
+            .f64_observable_gauge("memory_usage")
+            .with_description("Memory usage")
+            .with_callback(|observer| {
+                observer.observe(0.1 + rand::rng().random_range(0.0..0.2), &[]);
+            })
+            .build()
+    });
 }
 ```
 
@@ -404,14 +446,12 @@ pub fn logs_demo() {
 
 #### 4.1.1 运行
 
-❗❗【非常重要】Rust SDK 的场景 `OTLP_ENDPOINT` 无需 `http://` 前缀，示例程序会统一补充，否则启动会失败。
-
 复制以下命令参数在你的终端运行：
 
 ```shell
 docker run -e TOKEN="{{access_config.token}}" \
 -e SERVICE_NAME="{{service_name}}" \
--e OTLP_ENDPOINT="{{access_config.otlp.http_endpoint_without_schema}}" \
+-e OTLP_ENDPOINT="{{access_config.otlp.http_endpoint}}" \
 -e ENABLE_TRACES="{{access_config.otlp.enable_traces}}" \
 -e ENABLE_METRICS="{{access_config.otlp.enable_metrics}}" \
 -e ENABLE_LOGS="{{access_config.otlp.enable_logs}}" helloworld-rust:latest
@@ -424,7 +464,7 @@ docker run -e TOKEN="{{access_config.token}}" \
 |----------------------|:--------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `TOKEN`              | `"{{access_config.token}}"`                             | 【必须】APM 应用 `Token`。                                                                                                                                      |
 | `SERVICE_NAME`       | `"{{service_name}}"`                                    | 【必须】服务唯一标识，一个应用可以有多个服务，通过该属性区分。                                                                                                                          |
-| `OTLP_ENDPOINT`      | `"{{access_config.otlp.http_endpoint_without_schema}}"` | 【必须】OT 数据上报地址。Rust demo 使用 `HTTP/protobuf` 协议，并为该地址追加对应信号路径。 |
+| `OTLP_ENDPOINT`      | `"{{access_config.otlp.http_endpoint}}"`                | 【必须】OT 数据上报地址，请根据页面指引提供的接入地址进行填写。Rust demo 使用 `HTTP/protobuf` 协议，并为该地址追加对应信号路径。 |
 | `PROFILING_ENDPOINT` | `"{{access_config.profiling.endpoint}}"`                | 当前 Rust demo 不读取该参数。                                                                                                                                    |
 | `ENABLE_TRACES`      | `{{access_config.otlp.enable_traces}}`                  | 是否启用调用链上报。                                                                                                                                               |
 | `ENABLE_METRICS`     | `{{access_config.otlp.enable_metrics}}`                 | 是否启用指标上报。                                                                                                                                                |
