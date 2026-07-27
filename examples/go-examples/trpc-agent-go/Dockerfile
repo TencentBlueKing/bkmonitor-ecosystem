@@ -18,20 +18,28 @@ COPY . ./
 
 RUN set -ex && \
     go mod download && \
-    CGO_ENABLED=0 GOOS=linux go build -trimpath -o /bin/client ./client
+    CGO_ENABLED=0 GOOS=linux go build -trimpath -o /bin/server .
 
 FROM alpine:3.20 AS app
 
 RUN apk add --no-cache ca-certificates && \
     addgroup -S app && adduser -S -G app app
 
-COPY --from=build /bin/client /bin/client
+COPY --from=build /bin/server /bin/server
 
 USER app
 
-# TARGET 指向 server 的地址；INTERVAL_SECONDS 控制自生成数据的调用间隔（0 表示只跑一次）。
-ENV TARGET="http://server:8080" \
+# ❗❗ 运行前请通过环境变量提供 APM Token / OTLP 地址 / 模型 Key。
+# 单个进程会分别用两个 goroutine 运行 A2A Server 和 loopQuery Client。
+ENV HOST="0.0.0.0:8080" \
+    TOKEN="fixme" \
+    OTLP_ENDPOINT="fixme:4318" \
+    MODEL_API_KEY="fixme" \
+    MODEL_NAME="gpt-4o-mini" \
     PROMPT="Use the calculator to compute 12 * 7." \
-    INTERVAL_SECONDS="30"
+    INTERVAL_SECONDS="30" \
+    DEBUG_OUTPUT="false"
 
-ENTRYPOINT ["/bin/client"]
+EXPOSE 8080
+
+ENTRYPOINT ["/bin/server"]

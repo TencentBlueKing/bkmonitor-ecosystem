@@ -15,8 +15,10 @@ import (
 	"time"
 )
 
+// TestConfigValidate verifies required runtime configuration before startup.
 func TestConfigValidate(t *testing.T) {
 	valid := config{
+		host:         "127.0.0.1:8080",
 		token:        "token",
 		otlpEndpoint: "collector.example.com:4318",
 		modelAPIKey:  "model-key",
@@ -35,6 +37,7 @@ func TestConfigValidate(t *testing.T) {
 		{name: "endpoint contains scheme", mutate: func(cfg *config) {
 			cfg.otlpEndpoint = "http://collector.example.com:4318"
 		}},
+		{name: "invalid host", mutate: func(cfg *config) { cfg.host = "127.0.0.1" }},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -47,18 +50,37 @@ func TestConfigValidate(t *testing.T) {
 	}
 }
 
-func TestEnvBool(t *testing.T) {
-	t.Setenv("BOOL_VALUE", "YES")
-	if !envBool("BOOL_VALUE", false) {
-		t.Fatal("YES should be parsed as true")
+func TestLocalAgentURL(t *testing.T) {
+	tests := []struct {
+		listenAddress string
+		want          string
+	}{
+		{listenAddress: "0.0.0.0:8080", want: "http://127.0.0.1:8080"},
+		{listenAddress: ":8080", want: "http://127.0.0.1:8080"},
+		{listenAddress: "[::]:8080", want: "http://127.0.0.1:8080"},
+		{listenAddress: "localhost:8080", want: "http://localhost:8080"},
 	}
-	t.Setenv("BOOL_VALUE", "0")
-	if envBool("BOOL_VALUE", true) {
-		t.Fatal("0 should be parsed as false")
+	for _, test := range tests {
+		t.Run(test.listenAddress, func(t *testing.T) {
+			got, err := localAgentURL(test.listenAddress)
+			if err != nil {
+				t.Fatalf("localAgentURL returned an error: %v", err)
+			}
+			if got != test.want {
+				t.Fatalf("localAgentURL(%q) = %q, want %q", test.listenAddress, got, test.want)
+			}
+		})
 	}
-	t.Setenv("BOOL_VALUE", "invalid")
-	if !envBool("BOOL_VALUE", true) {
-		t.Fatal("invalid values should use the fallback")
+}
+
+func TestEnvDurationSeconds(t *testing.T) {
+	t.Setenv("INTERVAL_SECONDS", "5")
+	if got := envDurationSeconds("INTERVAL_SECONDS", 30*time.Second); got != 5*time.Second {
+		t.Fatalf("envDurationSeconds = %s, want 5s", got)
+	}
+	t.Setenv("INTERVAL_SECONDS", "invalid")
+	if got := envDurationSeconds("INTERVAL_SECONDS", 30*time.Second); got != 30*time.Second {
+		t.Fatalf("invalid envDurationSeconds = %s, want fallback 30s", got)
 	}
 }
 

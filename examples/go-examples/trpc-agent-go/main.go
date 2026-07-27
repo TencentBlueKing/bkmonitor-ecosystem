@@ -6,12 +6,12 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-// Package main 启动一个 A2A Server，将 trpc-agent-go 的 Agent 暴露为可远程调用的服务，
-// 并把 Agent 执行产生的 Traces、Metrics 和 Logs 上报到蓝鲸 APM。
+// Package main 在同一进程中启动 A2A Server 和周期调用它的 loopQuery Client，
+// 两者分别运行在 goroutine 中，并把 Agent 执行产生的 Traces、Metrics 和 Logs 上报到蓝鲸 APM。
 //
 // 该示例演示的是 tRPC-Agent 框架自身的可观测：Agent / LLM 调用 / Tool 执行的调用链和
-// GenAI 指标由框架内置埋点自动产生，只要在 server 端装好 OTel Provider 即可自动上报，
-// 业务代码无需手动埋点。因为 Agent 在 server 进程内执行，这些信号也都在 server 端产生。
+// GenAI 指标由框架内置埋点自动产生，只要在进程启动时装好 OTel Provider 即可自动上报，
+// 业务代码无需手动埋点。
 package main
 
 import (
@@ -28,6 +28,7 @@ import (
 
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	otellog "go.opentelemetry.io/otel/log"
+	"golang.org/x/sync/errgroup"
 	"trpc.group/trpc-go/trpc-agent-go/agent/llmagent"
 	"trpc.group/trpc-go/trpc-agent-go/model"
 	"trpc.group/trpc-go/trpc-agent-go/model/openai"
@@ -45,15 +46,16 @@ const (
 var applicationLogger *slog.Logger
 
 type config struct {
-	host             string
-	token            string
-	otlpEndpoint     string
-	serviceName      string
-	serviceNamespace string
-	serviceVersion   string
-	modelAPIKey      string
-	modelBaseURL     string
-	modelName        string
+	host         string
+	token        string
+	otlpEndpoint string
+	serviceName  string
+	modelAPIKey  string
+	modelBaseURL string
+	modelName    string
+	prompt       string
+	interval     time.Duration
+	debugOutput  bool
 }
 
 func main() {
@@ -80,11 +82,15 @@ func run(ctx context.Context, cfg config) error {
 	}()
 
 	agent := newAgent(cfg)
+	target, err := localAgentURL(cfg.host)
+	if err != nil {
+		return err
+	}
 
-	// ❗❗【关键点】WithAgent 时 A2A Server 会在内部为该 Agent 构建 Runner 并在 server 进程执行，
-	// 因此 Agent / LLM / Tool 的内置 Span 与 GenAI 指标都在 server 端产生并自动上报。
+	// ❗❗【关键点】WithAgent 时 A2A Server 会在内部为该 Agent 构建 Runner 并在当前进程执行，
+	// 因此 Agent / LLM / Tool 的内置 Span 与 GenAI 指标都在当前进程产生并自动上报。
 	srv, err := a2aserver.New(
-		a2aserver.WithHost(cfg.host),
+		a2aserver.WithHost(target),
 		a2aserver.WithAgent(agent, true),
 	)
 	if err != nil {
@@ -99,23 +105,29 @@ func run(ctx context.Context, cfg config) error {
 		slog.String("agent.name", agentName),
 		slog.String("host", cfg.host),
 	)
-	log.Printf("A2A server listening on http://%s (agent card: http://%s/.well-known/agent.json)", cfg.host, cfg.host)
-
-	serverErr := make(chan error, 1)
-	go func() {
-		serverErr <- srv.Start(cfg.host)
-	}()
+	log.Printf("A2A server listening on http://%s (local agent URL: %s)", cfg.host, target)
 
 	signalCtx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	select {
-	case err := <-serverErr:
-		if err != nil {
+	group, groupCtx := errgroup.WithContext(signalCtx)
+	group.Go(func() error {
+		if err := srv.Start(cfg.host); err != nil {
 			return fmt.Errorf("a2a server stopped: %w", err)
 		}
+		if groupCtx.Err() == nil {
+			return fmt.Errorf("a2a server stopped unexpectedly")
+		}
 		return nil
-	case <-signalCtx.Done():
+	})
+	group.Go(func() error {
+		if err := loopQuery(groupCtx, cfg, target); err != nil {
+			return fmt.Errorf("A2A client loopQuery stopped: %w", err)
+		}
+		return nil
+	})
+	group.Go(func() error {
+		<-groupCtx.Done()
 		log.Println("shutting down A2A server...")
 		stopCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
@@ -123,7 +135,12 @@ func run(ctx context.Context, cfg config) error {
 			return fmt.Errorf("stop a2a server: %w", err)
 		}
 		return nil
+	})
+
+	if err := group.Wait(); err != nil {
+		return err
 	}
+	return nil
 }
 
 func newAgent(cfg config) *llmagent.LLMAgent {
@@ -190,16 +207,24 @@ func newApplicationLogger(loggerProvider otellog.LoggerProvider) *slog.Logger {
 
 func loadConfig() config {
 	return config{
-		host:             envOrDefault("HOST", "127.0.0.1:8080"),
-		token:            strings.TrimSpace(os.Getenv("TOKEN")),
-		otlpEndpoint:     strings.TrimSpace(os.Getenv("OTLP_ENDPOINT")),
-		serviceName:      envOrDefault("SERVICE_NAME", appName),
-		serviceNamespace: envOrDefault("SERVICE_NAMESPACE", "trpc-agent"),
-		serviceVersion:   envOrDefault("SERVICE_VERSION", "1.0.0"),
-		modelAPIKey:      strings.TrimSpace(os.Getenv("MODEL_API_KEY")),
-		modelBaseURL:     strings.TrimSpace(os.Getenv("MODEL_BASE_URL")),
-		modelName:        envOrDefault("MODEL_NAME", "gpt-4o-mini"),
+		host:         envOrDefault("HOST", "127.0.0.1:8080"),
+		token:        strings.TrimSpace(os.Getenv("TOKEN")),
+		otlpEndpoint: strings.TrimSpace(os.Getenv("OTLP_ENDPOINT")),
+		serviceName:  envOrDefault("SERVICE_NAME", appName),
+		modelAPIKey:  strings.TrimSpace(os.Getenv("MODEL_API_KEY")),
+		modelBaseURL: strings.TrimSpace(os.Getenv("MODEL_BASE_URL")),
+		modelName:    envOrDefault("MODEL_NAME", "gpt-4o-mini"),
+		prompt:       envOrDefault("PROMPT", defaultPrompt),
+		interval:     envDurationSeconds("INTERVAL_SECONDS", 30*time.Second),
+		debugOutput:  strings.EqualFold(envOrDefault("DEBUG_OUTPUT", "false"), "true"),
 	}
+}
+
+func envOrDefault(key, fallback string) string {
+	if value := strings.TrimSpace(os.Getenv(key)); value != "" {
+		return value
+	}
+	return fallback
 }
 
 func (cfg config) validate() error {
@@ -218,6 +243,9 @@ func (cfg config) validate() error {
 	}
 	if strings.Contains(cfg.otlpEndpoint, "://") {
 		return fmt.Errorf("OTLP_ENDPOINT must be host:port without a URL scheme for the Go demo")
+	}
+	if _, err := localAgentURL(cfg.host); err != nil {
+		return err
 	}
 	return nil
 }

@@ -14,9 +14,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"strings"
 
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	"go.opentelemetry.io/otel/log/global"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
@@ -26,40 +24,26 @@ import (
 	atrace "trpc.group/trpc-go/trpc-agent-go/telemetry/trace"
 )
 
-// setupTelemetry 在创建 Agent 之前安装全局 Trace、Metric 和 Log Provider。
+// setupTelemetry 在单进程 Demo 创建 Agent 之前安装全局 Trace、Metric 和 Log Provider。
 //
 // ❗❗【关键点】trpc-agent-go 的内置埋点（Runner / LlmAgent / model / tool 的 Span 与 GenAI 指标）
 // 使用的是 OTel 全局 Provider：atrace.Start 会 otel.SetTracerProvider，ametric.InitMeterProvider
 // 会注入框架全局 Meter。因此这里装好 Provider 之后，Agent 的调用链和 GenAI 指标便会自动上报，
-// 业务代码无需手动埋点。由于 Agent 在 server 进程内执行，这些信号也在 server 端产生。
+// 业务代码无需手动埋点。
 func setupTelemetry(ctx context.Context, cfg config) (func(context.Context) error, error) {
 	// ❗❗【非常重要】指标导出器通过标准环境变量读取蓝鲸 APM 应用 Token。
 	header := "x-bk-token=" + url.QueryEscape(cfg.token)
-	if err := os.Setenv("OTEL_EXPORTER_OTLP_HEADERS", header); err != nil {
-		return nil, fmt.Errorf("set OTLP headers: %w", err)
-	}
 	if err := os.Setenv("OTEL_EXPORTER_OTLP_METRICS_HEADERS", header); err != nil {
 		return nil, fmt.Errorf("set metrics OTLP headers: %w", err)
 	}
-	if os.Getenv("OTEL_METRIC_EXPORT_INTERVAL") == "" {
-		if err := os.Setenv("OTEL_METRIC_EXPORT_INTERVAL", "30000"); err != nil {
-			return nil, fmt.Errorf("set metric export interval: %w", err)
-		}
-	}
 
-	resourceAttributes := k8sResourceAttributes()
-	metricOptions := []ametric.Option{
+	meterProvider, err := ametric.NewMeterProvider(
+		ctx,
 		// ❗❗【非常重要】请使用 APM 接入指引提供的 HTTP OTLP 地址，格式为 host:port。
 		ametric.WithEndpoint(cfg.otlpEndpoint),
 		ametric.WithProtocol("http"),
 		ametric.WithServiceName(cfg.serviceName),
-		ametric.WithServiceNamespace(cfg.serviceNamespace),
-		ametric.WithServiceVersion(cfg.serviceVersion),
-	}
-	if len(resourceAttributes) > 0 {
-		metricOptions = append(metricOptions, ametric.WithResourceAttributes(resourceAttributes...))
-	}
-	meterProvider, err := ametric.NewMeterProvider(ctx, metricOptions...)
+	)
 	if err != nil {
 		return nil, fmt.Errorf("create meter provider: %w", err)
 	}
@@ -68,27 +52,22 @@ func setupTelemetry(ctx context.Context, cfg config) (func(context.Context) erro
 		return nil, fmt.Errorf("initialize agent metrics: %w", err)
 	}
 
-	traceOptions := []atrace.Option{
+	traceLifecycleCtx, cancelTraceLifecycle := context.WithCancel(ctx)
+	shutdownTrace, err := atrace.Start(
+		traceLifecycleCtx,
 		// ❗❗【非常重要】请使用 APM 接入指引提供的 HTTP OTLP 地址，格式为 host:port。
 		atrace.WithEndpoint(cfg.otlpEndpoint),
 		atrace.WithProtocol("http"),
 		// ❗❗【非常重要】请将 APM 应用 Token 作为 x-bk-token Header 传入。
 		atrace.WithHeaders(map[string]string{"x-bk-token": cfg.token}),
 		atrace.WithServiceName(cfg.serviceName),
-		atrace.WithServiceNamespace(cfg.serviceNamespace),
-		atrace.WithServiceVersion(cfg.serviceVersion),
-	}
-	if len(resourceAttributes) > 0 {
-		traceOptions = append(traceOptions, atrace.WithResourceAttributes(resourceAttributes...))
-	}
-	traceLifecycleCtx, cancelTraceLifecycle := context.WithCancel(ctx)
-	shutdownTrace, err := atrace.Start(traceLifecycleCtx, traceOptions...)
+	)
 	if err != nil {
 		cancelTraceLifecycle()
 		_ = meterProvider.Shutdown(ctx)
 		return nil, fmt.Errorf("start agent traces: %w", err)
 	}
-	loggerProvider, err := newLoggerProvider(ctx, cfg, resourceAttributes)
+	loggerProvider, err := newLoggerProvider(ctx, cfg)
 	if err != nil {
 		cancelTraceLifecycle()
 		_ = shutdownTrace()
@@ -112,7 +91,6 @@ func setupTelemetry(ctx context.Context, cfg config) (func(context.Context) erro
 func newLoggerProvider(
 	ctx context.Context,
 	cfg config,
-	resourceAttributes []attribute.KeyValue,
 ) (*sdklog.LoggerProvider, error) {
 	// ❗❗【非常重要】请使用 APM 接入指引提供的 HTTP OTLP 地址和应用 Token。
 	exporter, err := otlploghttp.New(
@@ -124,15 +102,9 @@ func newLoggerProvider(
 	if err != nil {
 		return nil, fmt.Errorf("create OTLP log exporter: %w", err)
 	}
-	attributes := []attribute.KeyValue{
-		semconv.ServiceName(cfg.serviceName),
-		semconv.ServiceNamespace(cfg.serviceNamespace),
-		semconv.ServiceVersion(cfg.serviceVersion),
-	}
-	attributes = append(attributes, resourceAttributes...)
 	res, err := resource.New(
 		ctx,
-		resource.WithAttributes(attributes...),
+		resource.WithAttributes(semconv.ServiceName(cfg.serviceName)),
 		resource.WithFromEnv(),
 		resource.WithHost(),
 		resource.WithTelemetrySDK(),
@@ -190,36 +162,4 @@ func shutdownProviders(
 	}
 	cancelTrace()
 	return shutdownErr
-}
-
-func k8sResourceAttributes() []attribute.KeyValue {
-	attributes := make([]attribute.KeyValue, 0, 3)
-	for key, value := range map[string]string{
-		"k8s.bcs.cluster.id": os.Getenv("K8S_BCS_CLUSTER_ID"),
-		"k8s.namespace.name": os.Getenv("K8S_NAMESPACE"),
-		"k8s.pod.name":       os.Getenv("K8S_POD_NAME"),
-	} {
-		if value != "" {
-			attributes = append(attributes, attribute.String(key, value))
-		}
-	}
-	return attributes
-}
-
-func envOrDefault(key, fallback string) string {
-	if value := strings.TrimSpace(os.Getenv(key)); value != "" {
-		return value
-	}
-	return fallback
-}
-
-func envBool(key string, fallback bool) bool {
-	switch strings.ToLower(strings.TrimSpace(os.Getenv(key))) {
-	case "1", "true", "yes":
-		return true
-	case "0", "false", "no":
-		return false
-	default:
-		return fallback
-	}
 }
