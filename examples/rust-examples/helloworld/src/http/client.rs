@@ -8,18 +8,22 @@
 
 //! 定时发起请求、为示例持续产生观测数据的内置客户端。
 
-use opentelemetry::global;
+use opentelemetry::{global, trace::Status};
 use opentelemetry_http::HeaderInjector;
 use tokio::time::sleep;
 use tracing::Instrument;
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 
+use super::{set_http_request_attributes, set_http_response_attributes};
+
 async fn query_hello_world(client: &reqwest::Client, url: &str) {
     let span = tracing::info_span!("Caller/queryHelloWorld", otel.kind = "client");
+    set_http_request_attributes(&span);
 
     let mut request = match client.get(url).build() {
         Ok(request) => request,
         Err(error) => {
+            span.set_status(Status::error(error.to_string()));
             tracing::error!(%error, "[query_hello_world] got error");
             return;
         }
@@ -32,12 +36,16 @@ async fn query_hello_world(client: &reqwest::Client, url: &str) {
         tracing::info!("[query_hello_world] send request");
         match client.execute(request).await {
             Ok(response) => {
+                set_http_response_attributes(&tracing::Span::current(), response.status());
                 tracing::info!(
                     status = %response.status(),
                     "[query_hello_world] received response"
                 )
             }
-            Err(error) => tracing::error!(%error, "[query_hello_world] got error"),
+            Err(error) => {
+                tracing::Span::current().set_status(Status::error(error.to_string()));
+                tracing::error!(%error, "[query_hello_world] got error");
+            }
         }
     }
     .instrument(span)

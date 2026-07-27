@@ -12,10 +12,17 @@ use opentelemetry::global;
 use opentelemetry::trace::TracerProvider;
 use opentelemetry_otlp::{Protocol, WithExportConfig, WithHttpConfig};
 use opentelemetry_sdk::{
-    logs::SdkLoggerProvider, metrics::SdkMeterProvider, propagation::TraceContextPropagator,
-    trace::SdkTracerProvider, Resource,
+    logs::SdkLoggerProvider,
+    metrics::{Aggregation, InstrumentKind, SdkMeterProvider, Stream},
+    propagation::TraceContextPropagator,
+    trace::SdkTracerProvider,
+    Resource,
 };
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{
+    filter::filter_fn,
+    layer::{Layer, SubscriberExt},
+    util::SubscriberInitExt,
+};
 
 use crate::{config::AppConfig, http::server::metrics_gauge_demo};
 
@@ -51,17 +58,20 @@ pub fn setup(config: &AppConfig) -> Result<TelemetryGuard, Box<dyn std::error::E
         .with_service_name(config.service_name.clone())
         .build();
     let headers = HashMap::from([("x-bk-token".to_owned(), config.token.clone())]);
+    let signal_endpoint = |signal_path: &str| {
+        format!(
+            "{}/{}",
+            config.otlp_endpoint.trim_end_matches('/'),
+            signal_path.trim_start_matches('/')
+        )
+    };
 
     let tracer_provider = if config.enable_traces {
         let exporter = opentelemetry_otlp::SpanExporter::builder()
             .with_http()
             .with_protocol(Protocol::HttpBinary)
             // ❗❗【非常重要】数据上报地址，请根据页面指引提供的接入地址进行填写
-            // 格式为 ip:port 或 domain:port，不要带 schema
-            .with_endpoint(format!(
-                "http://{}/v1/traces",
-                config.otlp_endpoint.trim_end_matches('/')
-            ))
+            .with_endpoint(signal_endpoint("v1/traces"))
             // ❗❗【非常重要】请传入应用 Token
             .with_headers(headers.clone())
             .build()?;
@@ -80,16 +90,29 @@ pub fn setup(config: &AppConfig) -> Result<TelemetryGuard, Box<dyn std::error::E
             .with_http()
             .with_protocol(Protocol::HttpBinary)
             // ❗❗【非常重要】数据上报地址，请根据页面指引提供的接入地址进行填写
-            // 格式为 ip:port 或 domain:port，不要带 schema
-            .with_endpoint(format!(
-                "http://{}/v1/metrics",
-                config.otlp_endpoint.trim_end_matches('/')
-            ))
+            .with_endpoint(signal_endpoint("v1/metrics"))
             // ❗❗【非常重要】请传入应用 Token
             .with_headers(headers.clone())
             .build()?;
         SdkMeterProvider::builder()
             .with_periodic_exporter(exporter)
+            .with_view(|instrument| {
+                if instrument.kind() != InstrumentKind::Histogram
+                    || !instrument.name().ends_with("_seconds")
+                {
+                    return None;
+                }
+
+                Some(
+                    Stream::builder()
+                        .with_aggregation(Aggregation::ExplicitBucketHistogram {
+                            boundaries: [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0].to_vec(),
+                            record_min_max: true,
+                        })
+                        .build()
+                        .expect("秒单位 Histogram 分桶配置应当有效"),
+                )
+            })
             .with_resource(resource.clone())
             .build()
     } else {
@@ -103,11 +126,7 @@ pub fn setup(config: &AppConfig) -> Result<TelemetryGuard, Box<dyn std::error::E
             .with_http()
             .with_protocol(Protocol::HttpBinary)
             // ❗❗【非常重要】数据上报地址，请根据页面指引提供的接入地址进行填写
-            // 格式为 ip:port 或 domain:port，不要带 schema
-            .with_endpoint(format!(
-                "http://{}/v1/logs",
-                config.otlp_endpoint.trim_end_matches('/')
-            ))
+            .with_endpoint(signal_endpoint("v1/logs"))
             // ❗❗【非常重要】请传入应用 Token
             .with_headers(headers)
             .build()?;
@@ -128,8 +147,12 @@ pub fn setup(config: &AppConfig) -> Result<TelemetryGuard, Box<dyn std::error::E
         opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge::new(&logger_provider);
     tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer())
-        .with(trace_layer)
-        .with(log_layer)
+        .with(trace_layer.with_filter(filter_fn(|metadata| {
+            metadata.target() == "helloworld" || metadata.target().starts_with("helloworld::")
+        })))
+        .with(log_layer.with_filter(filter_fn(|metadata| {
+            metadata.target() == "helloworld" || metadata.target().starts_with("helloworld::")
+        })))
         .try_init()?;
 
     Ok(TelemetryGuard {

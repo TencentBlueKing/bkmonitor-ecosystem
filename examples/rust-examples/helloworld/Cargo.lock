@@ -390,7 +390,6 @@ dependencies = [
  "rand 0.9.5",
  "reqwest",
  "tokio",
- "tower",
  "tracing",
  "tracing-opentelemetry",
  "tracing-subscriber",

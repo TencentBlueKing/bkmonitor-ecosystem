@@ -17,6 +17,22 @@ use helloworld::http::{
 use helloworld::{config::AppConfig, telemetry};
 use tokio::net::TcpListener;
 
+#[cfg(unix)]
+async fn shutdown_signal() -> std::io::Result<()> {
+    use tokio::signal::unix::{signal, SignalKind};
+
+    let mut sigterm = signal(SignalKind::terminate())?;
+    tokio::select! {
+        result = tokio::signal::ctrl_c() => result,
+        _ = sigterm.recv() => Ok(()),
+    }
+}
+
+#[cfg(not(unix))]
+async fn shutdown_signal() -> std::io::Result<()> {
+    tokio::signal::ctrl_c().await
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let config = AppConfig::from_env();
@@ -34,7 +50,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     );
     tokio::select! {
         result = axum::serve(listener, app(AppState { error_rate: 0.1 })) => result?,
-        signal = tokio::signal::ctrl_c() => signal?,
+        signal = shutdown_signal() => signal?,
     }
 
     client_task.abort();

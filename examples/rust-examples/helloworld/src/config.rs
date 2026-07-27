@@ -29,7 +29,7 @@ impl AppConfig {
             service_name: std::env::var("SERVICE_NAME").unwrap_or_else(|_| "helloworld".to_owned()),
             token: std::env::var("TOKEN").unwrap_or_else(|_| "todo".to_owned()),
             otlp_endpoint: std::env::var("OTLP_ENDPOINT")
-                .unwrap_or_else(|_| "127.0.0.1:4318".to_owned()),
+                .unwrap_or_else(|_| "http://127.0.0.1:4318".to_owned()),
             otlp_exporter_type: std::env::var("OTLP_EXPORTER_TYPE")
                 .unwrap_or_else(|_| "http".to_owned()),
             enable_traces: std::env::var("ENABLE_TRACES")

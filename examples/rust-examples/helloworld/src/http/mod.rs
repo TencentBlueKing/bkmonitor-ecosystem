@@ -8,5 +8,21 @@
 
 //! HTTP 服务端与内置 HTTP 客户端。
 
+use axum::http::StatusCode;
+use opentelemetry::trace::Status;
+use tracing_opentelemetry::OpenTelemetrySpanExt;
+
 pub mod client;
 pub mod server;
+
+fn set_http_request_attributes(span: &tracing::Span) {
+    span.set_attribute("http.request.method", "GET");
+    span.set_attribute("http.route", "/helloworld");
+}
+
+fn set_http_response_attributes(span: &tracing::Span, status: StatusCode) {
+    span.set_attribute("http.response.status_code", i64::from(status.as_u16()));
+    if status.is_server_error() {
+        span.set_status(Status::error(status.to_string()));
+    }
+}

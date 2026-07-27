@@ -20,11 +20,14 @@ use opentelemetry::{
     global,
     metrics::ObservableGauge,
     trace::{Status, TraceContextExt},
-    KeyValue,
+    Context, KeyValue,
 };
 use opentelemetry_http::HeaderExtractor;
 use rand::Rng;
+use tracing::Instrument;
 use tracing_opentelemetry::OpenTelemetrySpanExt;
+
+use super::{set_http_request_attributes, set_http_response_attributes};
 
 static MEMORY_USAGE: OnceLock<ObservableGauge<f64>> = OnceLock::new();
 
@@ -124,6 +127,7 @@ async fn hello_world(
         propagator.extract(&HeaderExtractor(&headers))
     });
     let span = tracing::info_span!("Handle/HelloWorld", otel.kind = "server");
+    set_http_request_attributes(&span);
     if let Err(error) = span.set_parent(parent_context) {
         tracing::warn!(%error, "设置服务端调用链父上下文失败");
     }
@@ -155,10 +159,14 @@ async fn hello_world(
     // Traces（调用链）- 模拟错误
     if rng.random::<f64>() < state.error_rate {
         let error = traces_random_error_demo(&mut rng);
-        return Err((StatusCode::INTERNAL_SERVER_ERROR, error.as_str().to_owned()));
+        let response = Err((StatusCode::INTERNAL_SERVER_ERROR, error.as_str().to_owned()));
+        set_http_response_attributes(&span, StatusCode::INTERNAL_SERVER_ERROR);
+        response
+    } else {
+        let response = Ok(format!("Hello World, {}!", country.as_str()));
+        set_http_response_attributes(&span, StatusCode::OK);
+        response
     }
-
-    Ok(format!("Hello World, {}!", country.as_str()))
 }
 
 fn do_something(max_ms: u64) {
@@ -304,13 +312,35 @@ fn traces_span_event_demo() {
 // traces_span_links_demo Traces（调用链）- Span Links
 // Refer: https://opentelemetry.io/docs/specs/otel/trace/api/#specifying-links
 fn traces_span_links_demo() {
-    let async_span = tracing::info_span!("SpanLinkDemo/asyncCaller");
-    let async_context = async_span.context();
-    tracing::Span::current().add_link_with_attributes(
-        async_context.span().span_context().clone(),
-        vec![KeyValue::new("link_type", "async")],
-    );
-    tracing::info!("SpanLinkDemo async caller");
+    let caller = tracing::info_span!("SpanLinkDemo/asyncCaller", otel.kind = "producer");
+    let caller_context = caller.context();
+
+    let fanout_count = rand::rng().random_range(0_i64..3);
+    for link_index in 1..=fanout_count {
+        let callee = tracing::info_span!(
+            "SpanLinkDemo/asyncCallee",
+            otel.kind = "consumer",
+            relation.index = link_index
+        );
+        if let Err(error) = callee.set_parent(Context::new()) {
+            tracing::warn!(%error, "设置 Span Link Callee 为 Root Trace 失败");
+            continue;
+        }
+        callee.add_link_with_attributes(
+            caller_context.span().span_context().clone(),
+            vec![
+                KeyValue::new("relation.step", "SpanLinkDemo"),
+                KeyValue::new("relation.index", link_index),
+            ],
+        );
+
+        tokio::spawn(
+            async {
+                traces_custom_span_demo();
+            }
+            .instrument(callee),
+        );
+    }
 }
 
 // traces_random_error_demo Traces（调用链）- 异常事件、状态
