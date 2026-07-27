@@ -11,6 +11,9 @@ package main
 import (
 	"context"
 	"errors"
+	"net/http"
+	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 )
@@ -113,47 +116,38 @@ func TestCalculator(t *testing.T) {
 	}
 }
 
-func TestShutdownProviders(t *testing.T) {
-	traceCtx, cancelTrace := context.WithCancel(context.Background())
-	defer cancelTrace()
+func TestWaitForLocalRunnerHonorsContext(t *testing.T) {
+	requestStarted := make(chan struct{})
+	requestCanceled := make(chan struct{})
+	var startedOnce sync.Once
+	var canceledOnce sync.Once
+	server := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, request *http.Request) {
+		startedOnce.Do(func() { close(requestStarted) })
+		<-request.Context().Done()
+		canceledOnce.Do(func() { close(requestCanceled) })
+	}))
+	defer server.Close()
 
-	shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), 50*time.Millisecond)
-	defer cancelShutdown()
-	started := time.Now()
-	err := shutdownProviders(
-		shutdownCtx,
-		cancelTrace,
-		func() error {
-			<-traceCtx.Done()
-			return traceCtx.Err()
-		},
-		func(ctx context.Context) error {
-			<-ctx.Done()
-			return ctx.Err()
-		},
-		func(ctx context.Context) error {
-			<-ctx.Done()
-			return ctx.Err()
-		},
-	)
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	startedAt := time.Now()
+	_, err := waitForLocalRunner(ctx, server.URL)
 	if !errors.Is(err, context.DeadlineExceeded) {
-		t.Fatalf("expected deadline exceeded, got %v", err)
+		t.Fatalf("waitForLocalRunner error = %v, want context deadline exceeded", err)
 	}
-	if elapsed := time.Since(started); elapsed > time.Second {
-		t.Fatalf("shutdown did not honor its deadline: %s", elapsed)
+	if elapsed := time.Since(startedAt); elapsed > time.Second {
+		t.Fatalf("waitForLocalRunner did not honor its context: %s", elapsed)
 	}
-}
 
-func TestShutdownProvidersSuccess(t *testing.T) {
-	_, cancelTrace := context.WithCancel(context.Background())
-	err := shutdownProviders(
-		context.Background(),
-		cancelTrace,
-		func() error { return nil },
-		func(context.Context) error { return nil },
-		func(context.Context) error { return nil },
-	)
-	if err != nil {
-		t.Fatalf("successful shutdown returned an error: %v", err)
+	select {
+	case <-requestStarted:
+	default:
+		t.Fatal("agent card request was not started")
+	}
+	select {
+	case <-requestCanceled:
+	case <-time.After(time.Second):
+		t.Fatal("agent card request context was not canceled")
 	}
 }

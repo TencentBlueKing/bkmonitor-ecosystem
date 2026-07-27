@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations under the License.
 
 // Package main 在同一进程中启动 A2A Server 和周期调用它的 loopQuery Client，
-// 两者分别运行在 goroutine 中，并把 Agent 执行产生的 Traces、Metrics 和 Logs 上报到蓝鲸 APM。
+// 两者分别运行在 goroutine 中，并把 Agent 执行产生的 Traces 和 Metrics 上报到蓝鲸 APM。
 //
 // 该示例演示的是 tRPC-Agent 框架自身的可观测：Agent / LLM 调用 / Tool 执行的调用链和
 // GenAI 指标由框架内置埋点自动产生，只要在进程启动时装好 OTel Provider 即可自动上报，
@@ -16,23 +16,24 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
-	"log/slog"
 	"math"
+	"net/url"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
 
-	"go.opentelemetry.io/contrib/bridges/otelslog"
-	otellog "go.opentelemetry.io/otel/log"
 	"golang.org/x/sync/errgroup"
 	"trpc.group/trpc-go/trpc-agent-go/agent/llmagent"
 	"trpc.group/trpc-go/trpc-agent-go/model"
 	"trpc.group/trpc-go/trpc-agent-go/model/openai"
 	a2aserver "trpc.group/trpc-go/trpc-agent-go/server/a2a"
+	ametric "trpc.group/trpc-go/trpc-agent-go/telemetry/metric"
+	atrace "trpc.group/trpc-go/trpc-agent-go/telemetry/trace"
 	"trpc.group/trpc-go/trpc-agent-go/tool"
 	"trpc.group/trpc-go/trpc-agent-go/tool/function"
 )
@@ -41,9 +42,6 @@ const (
 	appName   = "trpc-agent-go-apm-demo"
 	agentName = "calculator-agent"
 )
-
-// applicationLogger 通过 OTel Bridge 将结构化日志上报到 APM。
-var applicationLogger *slog.Logger
 
 type config struct {
 	host         string
@@ -74,9 +72,7 @@ func run(ctx context.Context, cfg config) error {
 		return fmt.Errorf("setup telemetry: %w", err)
 	}
 	defer func() {
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		if err := shutdownTelemetry(shutdownCtx); err != nil {
+		if err := shutdownTelemetry(); err != nil {
 			log.Printf("shutdown telemetry: %v", err)
 		}
 	}()
@@ -97,14 +93,6 @@ func run(ctx context.Context, cfg config) error {
 		return fmt.Errorf("create a2a server: %w", err)
 	}
 
-	applicationLogger.LogAttrs(
-		ctx,
-		slog.LevelInfo,
-		"A2A server starting",
-		slog.String("event.name", "a2a.server.starting"),
-		slog.String("agent.name", agentName),
-		slog.String("host", cfg.host),
-	)
 	log.Printf("A2A server listening on http://%s (local agent URL: %s)", cfg.host, target)
 
 	signalCtx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
@@ -141,6 +129,51 @@ func run(ctx context.Context, cfg config) error {
 		return err
 	}
 	return nil
+}
+
+// setupTelemetry installs the global Trace and Metric providers before the
+// Agent is created, so tRPC Agent Go's built-in telemetry is exported.
+func setupTelemetry(ctx context.Context, cfg config) (func() error, error) {
+	header := "x-bk-token=" + url.QueryEscape(cfg.token)
+	if err := os.Setenv("OTEL_EXPORTER_OTLP_METRICS_HEADERS", header); err != nil {
+		return nil, fmt.Errorf("set metrics headers: %w", err)
+	}
+
+	meterProvider, err := ametric.NewMeterProvider(
+		ctx,
+		// ❗❗【非常重要】请使用 APM 接入指引提供的 HTTP OTLP 地址，格式为 host:port。
+		ametric.WithEndpoint(cfg.otlpEndpoint),
+		ametric.WithProtocol("http"),
+		ametric.WithServiceName(cfg.serviceName),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("create meter provider: %w", err)
+	}
+	if err := ametric.InitMeterProvider(meterProvider); err != nil {
+		shutdownErr := meterProvider.Shutdown(ctx)
+		return nil, errors.Join(fmt.Errorf("init meter provider: %w", err), shutdownErr)
+	}
+
+	shutdownTrace, err := atrace.Start(
+		ctx,
+		// ❗❗【非常重要】请使用 APM 接入指引提供的 HTTP OTLP 地址，格式为 host:port。
+		atrace.WithEndpoint(cfg.otlpEndpoint),
+		atrace.WithProtocol("http"),
+		// ❗❗【非常重要】请将 APM 应用 Token 作为 x-bk-token Header 传入。
+		atrace.WithHeaders(map[string]string{"x-bk-token": cfg.token}),
+		atrace.WithServiceName(cfg.serviceName),
+	)
+	if err != nil {
+		shutdownErr := meterProvider.Shutdown(ctx)
+		return nil, errors.Join(fmt.Errorf("start trace provider: %w", err), shutdownErr)
+	}
+
+	return func() error {
+		return errors.Join(
+			shutdownTrace(),
+			meterProvider.Shutdown(context.Background()),
+		)
+	}, nil
 }
 
 func newAgent(cfg config) *llmagent.LLMAgent {
@@ -199,10 +232,6 @@ type calculatorArgs struct {
 
 type calculatorResult struct {
 	Result float64 `json:"result"`
-}
-
-func newApplicationLogger(loggerProvider otellog.LoggerProvider) *slog.Logger {
-	return otelslog.NewLogger(appName, otelslog.WithLoggerProvider(loggerProvider))
 }
 
 func loadConfig() config {

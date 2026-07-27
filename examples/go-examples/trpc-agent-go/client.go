@@ -19,6 +19,7 @@ import (
 	"sync"
 	"time"
 
+	a2aclient "trpc.group/trpc-go/trpc-a2a-go/client"
 	"trpc.group/trpc-go/trpc-agent-go/agent/a2aagent"
 	"trpc.group/trpc-go/trpc-agent-go/event"
 	"trpc.group/trpc-go/trpc-agent-go/model"
@@ -114,7 +115,7 @@ func waitForLocalRunner(ctx context.Context, target string) (runner.Runner, erro
 
 	var lastErr error
 	for {
-		remoteAgent, err := a2aagent.New(a2aagent.WithAgentCardURL(target))
+		remoteAgent, err := newRemoteAgent(ctx, target)
 		if err == nil {
 			return runner.NewRunner(appName+"-client", remoteAgent), nil
 		}
@@ -126,6 +127,23 @@ func waitForLocalRunner(ctx context.Context, target string) (runner.Runner, erro
 		case <-ticker.C:
 		}
 	}
+}
+
+func newRemoteAgent(ctx context.Context, target string) (*a2aagent.A2AAgent, error) {
+	client, err := a2aclient.NewA2AClient(target)
+	if err != nil {
+		return nil, fmt.Errorf("create A2A client: %w", err)
+	}
+
+	card, err := client.GetAgentCard(ctx, "")
+	if err != nil {
+		return nil, fmt.Errorf("get agent card: %w", err)
+	}
+	if card.URL == "" {
+		card.URL = target
+	}
+
+	return a2aagent.New(a2aagent.WithAgentCard(card))
 }
 
 func queryAgent(
