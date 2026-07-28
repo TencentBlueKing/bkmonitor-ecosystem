@@ -12,13 +12,13 @@ gvm install go1.24.13 -B
 gvm use go1.24.13
 ```
 
-### uv 安装 (Python 包管理器)
+### uv 安装（Python 包管理器）
 
 ```shell
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-### GTM 安装 (Git Task Manager)
+### GTM 安装（Git Task Manager）
 
 ```shell
 uv tool install "bk-gtm>0.7,<0.8" --index-url=https://mirrors.tencent.com/pypi/simple --extra-index-url=https://mirrors.tencent.com/repository/pypi/tencent_pypi/simple
@@ -111,7 +111,7 @@ preci init
 preci info --update # 打开配置编辑界面
 ```
 
-在弹出的编辑窗口中，添加以下安全检查配置：
+在弹出的编辑窗口中，添加以下安全检查配置，并且移除其他无关的配置项，只保留这两个即可：
 ```yaml
 checkerSetBasesList:
   - checkerSetId: standard_scc

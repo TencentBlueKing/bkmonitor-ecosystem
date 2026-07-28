@@ -1,0 +1,188 @@
+# Go（tRPC Agent Go）接入
+
+本指南介绍如何复用 tRPC Agent Go 内置的 OpenTelemetry 埋点，将 Agent、模型调用和工具执行产生的 Traces 和 Metrics 上报到蓝鲸应用性能监控（APM）。
+
+> ⚠️ **请先区分两个同名前缀的框架**：本示例接入的是 <a href="https://github.com/trpc-group/trpc-agent-go" target="_blank">tRPC Agent Go（Agent 框架）</a>，而不是 <a href="https://github.com/trpc-group/trpc-go" target="_blank">tRPC-Go（RPC 框架）</a>。
+
+> **核心结论**：tRPC Agent Go 已经实现 Agent、LLM、Tool 和 Workflow 等框架执行路径的 OTel 埋点。业务不需要重复创建这些 Span 和 GenAI 指标，只需在进程启动时初始化一次 Provider 和 Exporter，配置数据上报地址、Token 和服务信息。
+
+本文和配套样例使用 OTLP/HTTP 上报。
+
+## 1. 前置准备
+
+请准备以下环境：
+
+* Git。
+* Docker 或其他兼容的容器工具。
+* OpenAI API 兼容的模型服务及其 API Key。
+
+## 2. 快速接入
+
+### 2.1 创建应用
+
+参考 <a href="https://bk.tencent.com/docs/markdown/ZH/Monitor/3.9/UserGuide/ProductFeatures/scene-apm/apm_monitor_overview.md" target="_blank">APM 接入流程</a> 创建一个应用，接入指引会基于应用生成相应的上报配置，如下：
+
+![](https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/images/1-application-setup.png)
+
+关注接入指引提供的两个配置项：
+
+- `TOKEN`：上报唯一凭证。
+
+- `OTLP_ENDPOINT`：数据上报地址。
+
+有任何问题可企微联系 `BK助手` 协助处理。
+
+### 2.2 接入
+
+#### 2.2.1 添加依赖（如果依赖已集成，可以忽略）
+
+tRPC Agent Go 已内置 OpenTelemetry 埋点和初始化接口。项目已使用该框架时无需增加其他观测 SDK；否则在 `go.mod` 中添加：
+
+```go
+require trpc.group/trpc-go/trpc-agent-go v1.10.0
+```
+
+#### 2.2.2 初始化 SDK
+
+以下代码可以直接放入应用的 `main` 包。Provider 会在 Agent 和 Server 创建前完成初始化；Traces 必须初始化，否则全局 Tracer 不会上报数据。示例同时启用了可选的 Metrics。`cfg` 中包含 APM Token、OTLP Endpoint 和服务名。
+
+```go
+import (
+    "context"
+    "errors"
+    "fmt"
+    "net/url"
+    "os"
+
+    ametric "trpc.group/trpc-go/trpc-agent-go/telemetry/metric"
+    atrace "trpc.group/trpc-go/trpc-agent-go/telemetry/trace"
+)
+
+func setupTelemetry(ctx context.Context, cfg config) (func() error, error) {
+    header := "x-bk-token=" + url.QueryEscape(cfg.token)
+    if err := os.Setenv("OTEL_EXPORTER_OTLP_METRICS_HEADERS", header); err != nil {
+        return nil, fmt.Errorf("set metrics headers: %w", err)
+    }
+
+    meterProvider, err := ametric.NewMeterProvider(
+        ctx,
+        // ❗❗【非常重要】请使用 APM 接入指引提供的 HTTP OTLP 地址，格式为 host:port。
+        ametric.WithEndpoint(cfg.otlpEndpoint),
+        ametric.WithProtocol("http"),
+        ametric.WithServiceName(cfg.serviceName),
+    )
+    if err != nil {
+        return nil, fmt.Errorf("create meter provider: %w", err)
+    }
+    if err := ametric.InitMeterProvider(meterProvider); err != nil {
+        shutdownErr := meterProvider.Shutdown(ctx)
+        return nil, errors.Join(fmt.Errorf("init meter provider: %w", err), shutdownErr)
+    }
+
+    shutdownTrace, err := atrace.Start(
+        ctx,
+        // ❗❗【非常重要】请使用 APM 接入指引提供的 HTTP OTLP 地址，格式为 host:port。
+        atrace.WithEndpoint(cfg.otlpEndpoint),
+        atrace.WithProtocol("http"),
+        // ❗❗【非常重要】请将 APM 应用 Token 作为 x-bk-token Header 传入。
+        atrace.WithHeaders(map[string]string{"x-bk-token": cfg.token}),
+        atrace.WithServiceName(cfg.serviceName),
+    )
+    if err != nil {
+        shutdownErr := meterProvider.Shutdown(ctx)
+        return nil, errors.Join(fmt.Errorf("start trace provider: %w", err), shutdownErr)
+    }
+
+    return func() error {
+        return errors.Join(
+            shutdownTrace(),
+            meterProvider.Shutdown(context.Background()),
+        )
+    }, nil
+}
+```
+
+在创建 Agent 前调用初始化函数，并在应用退出时关闭 Provider：
+
+```go
+shutdownTelemetry, err := setupTelemetry(ctx, cfg)
+if err != nil {
+    return fmt.Errorf("setup telemetry: %w", err)
+}
+defer func() {
+    if err := shutdownTelemetry(); err != nil {
+        log.Printf("shutdown telemetry: %v", err)
+    }
+}()
+```
+
+#### 2.2.3 关联配置
+
+| 环境变量 | 必需 | 说明 |
+| --- | --- | --- |
+| `OTLP_ENDPOINT` | 是 | APM 接入指引提供的 HTTP OTLP 上报地址，格式为 `host:port`，不包含 URL Scheme 和 `/v1/*` 路径。 |
+| `TOKEN` | 是 | APM 接入指引提供的应用 Token，通过 `x-bk-token` Header 上报。 |
+| `SERVICE_NAME` | 是 | APM 应用内的服务唯一标识。 |
+
+## 3. 可观测数据
+
+### 3.1 Traces
+
+框架会自动创建 Runner、Agent、模型调用、Tool 和 Workflow Span，用于分析：
+
+* 一次 Agent 请求经过的 Agent、模型和工具。
+* 模型调用和工具执行耗时。
+* 错误发生的执行阶段。
+* 多 Agent、Graph 或 Workflow 的父子调用关系。
+
+业务代码不需要重复创建这些 Span。只有需要观测框架无法感知的业务步骤时，才需要复用 `atrace.Tracer` 创建自定义 Span，并沿用 Runner 的 `context.Context`。
+
+### 3.2 Metrics
+
+tRPC Agent Go 内置的常用指标包括：
+
+| 指标 | 说明 |
+| --- | --- |
+| `trpc_agent_go.client.request_cnt` | Agent、模型或工具请求次数。 |
+| `gen_ai.client.operation.duration` | GenAI 操作耗时。 |
+| `gen_ai.client.token.usage` | 输入、输出和缓存 Token 用量。 |
+| `gen_ai.server.time_to_first_token` | 流式响应首 Token 耗时。 |
+| `trpc_agent_go.client.time_per_output_token` | 平均每个输出 Token 的耗时。 |
+| `trpc_agent_go.client.output_token_per_time` | 单位时间的输出 Token 数。 |
+| `gen_ai.workflow.elapsed_time` | Workflow 生命周期区间耗时。 |
+
+这些指标由框架自动记录。Histogram 在 APM 中会展开为 `_bucket`、`_count`、`_sum` 等序列。可通过 `OTEL_METRIC_EXPORT_INTERVAL` 调整导出间隔，单位为毫秒。
+
+## 4. 接入和验证
+
+### 4.1 启动 Demo
+
+```shell
+git clone https://github.com/TencentBlueKing/bkmonitor-ecosystem
+cd bkmonitor-ecosystem/examples/go-examples/trpc-agent-go
+docker build -t trpc-agent-go-apm:latest .
+
+docker run --rm --name trpc-agent-go-demo \
+  -p 8080:8080 \
+  -e TOKEN="<APM 应用 Token>" \
+  -e OTLP_ENDPOINT="<HTTP OTLP host:port>" \
+  -e SERVICE_NAME="trpc-agent-go-demo" \
+  -e MODEL_API_KEY="<模型 API Key>" \
+  -e MODEL_BASE_URL="<可选的 OpenAI 兼容 Base URL>" \
+  -e MODEL_NAME="<模型名称>" \
+  trpc-agent-go-apm:latest
+```
+
+Demo 启动后会自动请求 Agent，持续产生 Traces 和 Metrics 数据。
+
+### 4.2 查看数据
+
+| 查看调用链 | 查看指标 |
+| --- | --- |
+| ![查看调用链](./images/trpc-agent-go-traces.png) | ![查看指标](./images/trpc-agent-go-metrics.png) |
+
+## 5. 了解更多
+
+* <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem" target="_blank">各语言、框架接入代码样例</a>
+* <a href="https://github.com/trpc-group/trpc-agent-go" target="_blank">tRPC Agent Go</a>
+* <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/trpc-agent-go" target="_blank">本接入样例源码</a>
