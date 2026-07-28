@@ -1,6 +1,6 @@
 # Go（Jaeger - OpenTracing Bridge）接入
 
-本指南将帮助使用 Jaeger client 上报数据的用户，平滑过渡到使用 OpenTelemetry SDK 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/jaeger-ot-demo/" target="_blank">入门项目-jaeger-ot-demo</a> 为例，介绍调用链接入及 SDK 使用场景。
+本指南将帮助使用 Jaeger client 上报数据的用户，平滑过渡到使用 OpenTelemetry SDK 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/jaeger-ot-demo/" target="_blank">入门项目-jaeger-ot-demo</a> 为例，介绍调用链接入及 SDK 使用场景。
 
 入门项目功能齐全且可在开发环境运行，可以通过该项目快速接入并体验蓝鲸应用性能监控相关功能。
 
@@ -32,7 +32,7 @@ docker build -t jaeger-ot-demo-go:latest .
 
 ## 2. 快速接入
 
-Jaeger Client 是 OpenTracing API 规范的具体实现，目前业界标准已从 OpenTracing 演进为 OpenTelemetry（融合 OpenTracing 和 OpenCensus）。本文详解 Jaeger Client 到 OpenTelemetry SDK 的最小化迁移方案，我们也通过 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/jaeger-ot-demo/Dockerfile" target="_blank">Dockerfile</a> 演示了这一过程。
+Jaeger Client 是 OpenTracing API 规范的具体实现，目前业界标准已从 OpenTracing 演进为 OpenTelemetry（融合 OpenTracing 和 OpenCensus）。本文详解 Jaeger Client 到 OpenTelemetry SDK 的最小化迁移方案，我们也通过 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/jaeger-ot-demo/Dockerfile" target="_blank">Dockerfile</a> 演示了这一过程。
 
 ### 2.1 创建应用
 
@@ -75,7 +75,7 @@ import (
 
 OpenTelemetry 提供标准化的框架和工具包，用于创建和管理 Traces、Metrics、Logs 数据。示例项目集成 OpenTelemetry SDK 并将观测数据发送到 bk-collector。
 
-样例代码 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/jaeger-ot-demo/service/otlp.go" target="_blank">jaeger-ot-demo service/otlp.go</a> 只演示上报 Traces 数据的配置，完整的配置可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/helloworld/service/otlp/otlp.go" target="_blank">helloworld service/otlp/otlp.go</a> 进行接入。
+样例代码 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/jaeger-ot-demo/service/otlp.go" target="_blank">jaeger-ot-demo service/otlp.go</a> 只演示上报 Traces 数据的配置，完整的配置可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/helloworld/service/otlp/otlp.go" target="_blank">helloworld service/otlp/otlp.go</a> 进行接入。
 
 ### 2.4 项目 tracer 修改
 
@@ -149,7 +149,7 @@ func initJaeger(serviceName string, conf *config.Config, otelService *service.OT
 | `endpoint` | 【必须】数据上报地址，请根据页面指引提供的接入地址进行填写。 |
 | `x-bk-token`| 【必须】APM 应用 Token，作为 headers 传递。 |
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/jaeger-ot-demo/service/otlp.go" target="_blank">service/otlp.go setUpTraces</a> 提供了创建样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/jaeger-ot-demo/service/otlp.go" target="_blank">service/otlp.go setUpTraces</a> 提供了创建样例：
 
 ```go
 // newTracerExporter Initialize a new tracer exporter based on ExporterType
@@ -221,7 +221,7 @@ template:
                 fieldPath: metadata.namespace
 ```
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/jaeger-ot-demo/service/otlp.go" target="_blank">service/otlp.py newResource</a> 提供了创建样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/jaeger-ot-demo/service/otlp.go" target="_blank">service/otlp.py newResource</a> 提供了创建样例：
 
 ```go
 func (ots *OTelService) newResource() (*resource.Resource, error) {
@@ -252,7 +252,7 @@ func (ots *OTelService) newResource() (*resource.Resource, error) {
 
 ## 3. 使用场景
 
-当前示例项目使用 bridgeTracer 替换原有 Jaeger Client tracer 后，tracer 的使用无需任何改变。如果想要学习 Jaeger Client tracer 的使用方式，可参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/jaeger-client-demo/README.md" target="_blank">jaeger-client-demo「3. 使用场景」</a>实现。
+当前示例项目使用 bridgeTracer 替换原有 Jaeger Client tracer 后，tracer 的使用无需任何改变。如果想要学习 Jaeger Client tracer 的使用方式，可参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/jaeger-client-demo/README.md" target="_blank">jaeger-client-demo「3. 使用场景」</a>实现。
 
 ## 4. 快速体验
 

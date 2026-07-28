@@ -96,7 +96,7 @@ private static void safePushMetrics() {
 
 ### 2.3 运行样例
 
-示例代码也可以在样例仓库 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/metrics/sdks/java" target="_blank">bkmonitor-ecosystem/examples/metrics/sdks/java</a> 中找到。
+示例代码也可以在样例仓库 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/metrics/sdks/java" target="_blank">bkmonitor-ecosystem/examples/metrics/sdks/java</a> 中找到。
 
 PUSH 上报（metric 服务主动上报到端点）：
 

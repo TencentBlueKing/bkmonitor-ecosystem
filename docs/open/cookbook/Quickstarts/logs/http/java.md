@@ -48,7 +48,7 @@ cd bkmonitor-ecosystem/examples/logs/http/java
 
 ### 2.3 运行样例
 
-示例代码也可以在样例仓库 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/logs/http/java" target="_blank">bkmonitor-ecosystem/examples/logs/http/java</a> 中找到。
+示例代码也可以在样例仓库 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/logs/http/java" target="_blank">bkmonitor-ecosystem/examples/logs/http/java</a> 中找到。
 
 通过 docker build 构建名为 logs-http-java 的镜像，并使用 docker run 运行容器，同时通过环境变量 TOKEN、API_URL 传递配置参数，实现周期上报日志：
 

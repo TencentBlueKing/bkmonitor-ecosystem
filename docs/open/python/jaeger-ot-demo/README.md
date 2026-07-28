@@ -1,6 +1,6 @@
 # Python（Jaeger OpenTracing Shim）接入
 
-本指南将帮助使用 Jaeger client 上报数据的用户，平滑过渡到使用 OpenTelemetry SDK 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/python-examples/jaeger-ot-demo/" target="_blank">入门项目-jaeger-ot-demo</a> 为例，介绍调用链接入及 SDK 使用场景。
+本指南将帮助使用 Jaeger client 上报数据的用户，平滑过渡到使用 OpenTelemetry SDK 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/python-examples/jaeger-ot-demo/" target="_blank">入门项目-jaeger-ot-demo</a> 为例，介绍调用链接入及 SDK 使用场景。
 
 入门项目功能齐全且可在开发环境运行，可以通过该项目快速入门 OpenTelemetry，接入并体验蓝鲸应用性能监控相关功能。
 
@@ -32,7 +32,7 @@ docker build -t jaeger-ot-demo-py:latest .
 
 ## 2. 快速接入
 
-Jaeger Client 是 OpenTracing API 规范的具体实现，目前业界标准已从 OpenTracing 演进为 OpenTelemetry（融合 OpenTracing 和 OpenCensus）。本文详解 Jaeger Client 到 OpenTelemetry SDK 的最小化迁移方案，我们也通过 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/python-examples/jaeger-ot-demo/Dockerfile" target="_blank">Dockerfile</a> 演示了这一过程。
+Jaeger Client 是 OpenTracing API 规范的具体实现，目前业界标准已从 OpenTracing 演进为 OpenTelemetry（融合 OpenTracing 和 OpenCensus）。本文详解 Jaeger Client 到 OpenTelemetry SDK 的最小化迁移方案，我们也通过 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/python-examples/jaeger-ot-demo/Dockerfile" target="_blank">Dockerfile</a> 演示了这一过程。
 
 ### 2.1 创建应用
 
@@ -70,7 +70,7 @@ pip install opentelemetry-opentracing-shim
 
 OpenTelemetry 提供标准化的框架和工具包，用于创建和管理 Traces、Metrics、Logs 数据。示例项目集成 OpenTelemetry SDK 并将观测数据发送到 bk-collector。
 
-样例代码 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/python-examples/jaeger-ot-demo/src/services/otlp.py" target="_blank">jaeger-ot-demo services/otlp.py</a> 只演示上报 Traces 数据的配置，完整的配置可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/python-examples/helloworld/src/services/otlp.py" target="_blank">helloworld services/otlp.py</a> 进行接入。
+样例代码 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/python-examples/jaeger-ot-demo/src/services/otlp.py" target="_blank">jaeger-ot-demo services/otlp.py</a> 只演示上报 Traces 数据的配置，完整的配置可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/python-examples/helloworld/src/services/otlp.py" target="_blank">helloworld services/otlp.py</a> 进行接入。
 
 ### 2.4 项目 tracer 修改
 
@@ -120,7 +120,7 @@ def init_tracer() -> TracerShim:
 | `endpoint` | 【必须】数据上报地址，请根据页面指引提供的接入地址进行填写。 |
 | `x-bk-token`| 【必须】APM 应用 Token，作为 headers 传递。 |
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/python-examples/jaeger-ot-demo/src/services/otlp.py" target="_blank">services/otlp.py _setup_traces</a> 提供了创建样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/python-examples/jaeger-ot-demo/src/services/otlp.py" target="_blank">services/otlp.py _setup_traces</a> 提供了创建样例：
 
 ```python
 def _setup_traces(self, resource: Resource):
@@ -197,7 +197,7 @@ template:
                 fieldPath: metadata.namespace
 ```
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/python-examples/jaeger-ot-demo/src/services/otlp.py" target="_blank">services/otlp.py _create_resource</a> 提供了创建样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/python-examples/jaeger-ot-demo/src/services/otlp.py" target="_blank">services/otlp.py _create_resource</a> 提供了创建样例：
 
 ```python
 from opentelemetry.sdk.resources import Resource, ResourceDetector, get_aggregated_resources, OsResourceDetector
@@ -221,7 +221,7 @@ def _create_resource(self) -> Resource:
 
 ## 3. 使用场景
 
-当前示例项目聚焦于 OpenTelemetry 和 Jaeger Client 的 Traces 应用场景，如需探索 OpenTelemetry SDK 的完整可观测性能力（包括指标、日志等），请参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/python-examples/helloworld/" target="_blank">helloworld 项目</a> 进行实现。
+当前示例项目聚焦于 OpenTelemetry 和 Jaeger Client 的 Traces 应用场景，如需探索 OpenTelemetry SDK 的完整可观测性能力（包括指标、日志等），请参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/python-examples/helloworld/" target="_blank">helloworld 项目</a> 进行实现。
 
 ### 3.1 Traces
 

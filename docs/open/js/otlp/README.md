@@ -50,7 +50,7 @@ docker build -t helloworld-js:latest .
 
 OpenTelemetry 提供标准化的框架和工具包，用于创建和管理 Traces、Metrics、Logs 数据。
 
-示例项目提供集成 OpenTelemetry JavaScript SDK 并将观测数据发送到 bk-collector 的方式，可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/js-examples/helloworld/src/otlp.js" target="_blank">src/otlp.js</a> 进行接入。
+示例项目提供集成 OpenTelemetry JavaScript SDK 并将观测数据发送到 bk-collector 的方式，可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/js-examples/helloworld/src/otlp.js" target="_blank">src/otlp.js</a> 进行接入。
 
 ### 2.3 关键配置
 
@@ -79,7 +79,7 @@ npm install @opentelemetry/auto-instrumentations-node@0.62.2
 | `endpoint` | 【必须】数据上报地址，请根据页面指引提供的接入地址进行填写。 |
 | `x-bk-token`| 【必须】APM 应用 Token，作为 headers 传递。 |
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/js-examples/helloworld/src/otlp.js" target="_blank">src/otlp.js setupOtlp</a> 提供了包含调用链、指标、日志的 SDK 初始化样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/js-examples/helloworld/src/otlp.js" target="_blank">src/otlp.js setupOtlp</a> 提供了包含调用链、指标、日志的 SDK 初始化样例：
 
 ```javascript
 const { NodeSDK } = require('@opentelemetry/sdk-node');
@@ -241,7 +241,7 @@ template:
                 fieldPath: metadata.namespace
 ```
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/js-examples/helloworld/src/otlp.js" target="_blank">src/otlp.js setupOtlp</a> 提供了创建样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/js-examples/helloworld/src/otlp.js" target="_blank">src/otlp.js setupOtlp</a> 提供了创建样例：
 
 ```javascript
 const setupOtlp = (config) => {
@@ -320,7 +320,7 @@ app.get("/helloworld", async (req, res) => {
 });
 ```
 
-可以结合代码和下方说明进行使用：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/js-examples/helloworld/src/server.js" target="_blank">src/server.js</a>。
+可以结合代码和下方说明进行使用：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/js-examples/helloworld/src/server.js" target="_blank">src/server.js</a>。
 
 ### 3.1 Traces
 
@@ -618,7 +618,7 @@ const sdk = new opentelemetry.NodeSDK({
 });
 ```
 
-* 完整代码请参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/js-examples/helloworld/src/otlp.js" target="_blank">src/otlp.js</a>。
+* 完整代码请参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/js-examples/helloworld/src/otlp.js" target="_blank">src/otlp.js</a>。
 
 #### 3.4.2 服务端 & 客户端调用链串联
 
@@ -705,7 +705,7 @@ socket.on('disconnect', () => {
 });
 ```
 
-* 完整代码请参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/js-examples/helloworld/src/client.js" target="_blank">src/client.js</a> 和 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/js-examples/helloworld/src/server.js" target="_blank">src/server.js</a>。
+* 完整代码请参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/js-examples/helloworld/src/client.js" target="_blank">src/client.js</a> 和 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/js-examples/helloworld/src/server.js" target="_blank">src/server.js</a>。
 
 #### 3.4.3 记录异常连接
 

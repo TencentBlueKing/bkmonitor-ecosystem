@@ -81,7 +81,7 @@ docker run -e TOKEN="xxx" \
 go get github.com/grafana/pyroscope-go@v1.1.2
 ```
 
-示例项目提供集成 Pyroscope Go SDK 并将性能数据发送到 bk-collector 的方式，可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/helloworld/service/profiling/profiling.go" target="_blank">service/profiling/profiling.go</a> 进行接入:
+示例项目提供集成 Pyroscope Go SDK 并将性能数据发送到 bk-collector 的方式，可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/helloworld/service/profiling/profiling.go" target="_blank">service/profiling/profiling.go</a> 进行接入:
 
 ```go
 profiler, _ = pyroscope.Start(
@@ -106,7 +106,7 @@ profiler, _ = pyroscope.Start(
 
 Pyroscope 支持同 OpenTelemetry 集成，将 Traces 和 Profiling 数据链接起来，从而实现分析具体跨度（Span）的资源使用情况的目的。
 
-在开始之前，可以阅读文档 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/helloworld/README.md" target="_blank">Go（OpenTelemetry SDK）接入</a> 了解 OpenTelemetry。
+在开始之前，可以阅读文档 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/helloworld/README.md" target="_blank">Go（OpenTelemetry SDK）接入</a> 了解 OpenTelemetry。
 
 在项目中引入依赖：
 
@@ -115,7 +115,7 @@ Pyroscope 支持同 OpenTelemetry 集成，将 Traces 和 Profiling 数据链接
 go get github.com/grafana/otel-profiling-go@v0.5.1
 ```
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/helloworld/service/otlp/otlp.go" target="_blank">service/otlp/otlp.go setUpTraces</a> 提供了创建样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/helloworld/service/otlp/otlp.go" target="_blank">service/otlp/otlp.go setUpTraces</a> 提供了创建样例：
 
 ```go
 // setUpTraces

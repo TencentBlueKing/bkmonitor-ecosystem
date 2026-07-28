@@ -50,7 +50,7 @@ docker build -t helloworld-go:latest .
 
 OpenTelemetry 提供标准化的框架和工具包，用于创建和管理 Traces、Metrics、Logs 数据。
 
-示例项目提供集成 OpenTelemetry Go SDK 并将观测数据发送到 bk-collector 的方式，可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/helloworld/service/otlp/otlp.go" target="_blank">service/otlp/otlp.go</a> 进行接入。
+示例项目提供集成 OpenTelemetry Go SDK 并将观测数据发送到 bk-collector 的方式，可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/helloworld/service/otlp/otlp.go" target="_blank">service/otlp/otlp.go</a> 进行接入。
 
 ### 2.3 关键配置
 
@@ -65,7 +65,7 @@ OpenTelemetry 提供标准化的框架和工具包，用于创建和管理 Trace
 | `endpoint` | 【必须】数据上报地址，请根据页面指引提供的接入地址进行填写。 |
 | `x-bk-token`| 【必须】APM 应用 Token，作为 headers 传递。 |
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/helloworld/service/otlp/otlp.go" target="_blank">service/otlp/otlp.go newTracerExporter</a> 提供了创建样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/helloworld/service/otlp/otlp.go" target="_blank">service/otlp/otlp.go newTracerExporter</a> 提供了创建样例：
 
 ```go
 // setUpTraces
@@ -101,7 +101,7 @@ func (s *Service) newTracerExporter(ctx context.Context) (*otlptrace.Exporter, e
 }
 ```
 
-指标、日志的配置方式和上述一致，请参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/helloworld/service/otlp/otlp.go" target="_blank">service/otlp/otlp.go</a> 中的 `newMeterExporter`、`newLoggerExporter` 函数。
+指标、日志的配置方式和上述一致，请参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/helloworld/service/otlp/otlp.go" target="_blank">service/otlp/otlp.go</a> 中的 `newMeterExporter`、`newLoggerExporter` 函数。
 
 `x-bk-token` 也可以通过「环境变量」的方式进行配置：
 
@@ -161,7 +161,7 @@ template:
                 fieldPath: metadata.namespace
 ```
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/helloworld/service/otlp/otlp.go" target="_blank">service/otlp/otlp.go newResource</a> 提供了创建样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/helloworld/service/otlp/otlp.go" target="_blank">service/otlp/otlp.go newResource</a> 提供了创建样例：
 
 ```go
 func (s *Service) newResource() (*resource.Resource, error) {
@@ -217,7 +217,7 @@ func HelloWorld(w http.ResponseWriter, req *http.Request) {
 }
 ```
 
-可以结合代码和下方说明进行使用：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/helloworld/service/http/helloworld.go" target="_blank">service/http/helloworld.go</a>。
+可以结合代码和下方说明进行使用：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/helloworld/service/http/helloworld.go" target="_blank">service/http/helloworld.go</a>。
 
 ### 3.1 Traces
 

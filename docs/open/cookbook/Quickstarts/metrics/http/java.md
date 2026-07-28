@@ -51,7 +51,7 @@ cd bkmonitor-ecosystem/examples/metrics/http/java
 
 ### 2.3 运行样例
 
-示例代码也可以在样例仓库 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/metrics/http/java" target="_blank">bkmonitor-ecosystem/examples/metrics/http/java</a> 中找到。
+示例代码也可以在样例仓库 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/metrics/http/java" target="_blank">bkmonitor-ecosystem/examples/metrics/http/java</a> 中找到。
 
 复制以下命令参数在你的终端运行：
 

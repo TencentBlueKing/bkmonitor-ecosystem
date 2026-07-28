@@ -30,7 +30,7 @@ class EcosystemCodeRootUrl(metaclass=base.FieldMeta):
     class Meta:
         name = "ECOSYSTEM_CODE_ROOT_URL"
         scope = base.ScopeType.OPEN.value
-        value = "https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main"
+        value = "https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master"
 
 
 class ReferPythonOtlpUrl(metaclass=base.FieldMeta):

@@ -55,7 +55,7 @@ cd bkmonitor-ecosystem/examples/metrics/http/curl
 
 ### 2.3 运行样例
 
-示例代码也可以在样例仓库 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/metrics/http/curl/report_metrics.sh" target="_blank">bkmonitor-ecosystem/examples/metrics/http/curl</a> 中找到。
+示例代码也可以在样例仓库 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/metrics/http/curl/report_metrics.sh" target="_blank">bkmonitor-ecosystem/examples/metrics/http/curl</a> 中找到。
 
 该样例通过命令行实现周期上报指标：
 

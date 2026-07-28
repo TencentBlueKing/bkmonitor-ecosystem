@@ -36,7 +36,7 @@ docker build -t helloworld-java-sw:latest .
 
 SkyWalking Java Agent 是基于 <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.instrument/java/lang/instrument/package-summary.html" target="_blank">java.lang.instrument API</a> 和字节码增强技术制作而成的，通过添加 `-javaagent:/path/to/skywalking-agent.jar` 到 JVM 参数中，自动实现对应用程序的监控和追踪。适用于：避免埋点带来代码侵入性。
 
-本节将介绍如何自动附加埋点到 SpringBoot 项目上。我们也提供了开发样例 —— <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/java-examples/skywalking-agent" target="_blank">skywalking-agent-demo</a> 演示这一过程。
+本节将介绍如何自动附加埋点到 SpringBoot 项目上。我们也提供了开发样例 —— <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/java-examples/skywalking-agent" target="_blank">skywalking-agent-demo</a> 演示这一过程。
 
 ### 2.1 创建应用
 

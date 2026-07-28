@@ -1,6 +1,6 @@
 # Go（Jaeger Client）接入
 
-本指南将帮助您使用 Jaeger client 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/jaeger-client-demo/" target="_blank">入门项目-jaeger-client-demo</a> 为例，介绍调用链接入及 SDK 使用场景。
+本指南将帮助您使用 Jaeger client 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/jaeger-client-demo/" target="_blank">入门项目-jaeger-client-demo</a> 为例，介绍调用链接入及 SDK 使用场景。
 
 入门项目功能齐全且可在开发环境运行，可以通过该项目快速接入并体验蓝鲸应用性能监控相关功能。
 
@@ -32,7 +32,7 @@ docker build -t jaeger-client-demo-go:latest .
 
 ## 2. 快速接入
 
-Jaeger Client 是 OpenTracing API 规范的具体实现，目前业界标准已从 OpenTracing 演进为 OpenTelemetry（融合 OpenTracing 和 OpenCensus），推荐从 Jaeger client 迁移到 OTel SDK。本文详解 Jaeger Client 通过 HTTP Thrift 协议上报的方案，我们也通过 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/jaeger-client-demo/Dockerfile" target="_blank">Dockerfile</a> 演示了这一过程。
+Jaeger Client 是 OpenTracing API 规范的具体实现，目前业界标准已从 OpenTracing 演进为 OpenTelemetry（融合 OpenTracing 和 OpenCensus），推荐从 Jaeger client 迁移到 OTel SDK。本文详解 Jaeger Client 通过 HTTP Thrift 协议上报的方案，我们也通过 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/jaeger-client-demo/Dockerfile" target="_blank">Dockerfile</a> 演示了这一过程。
 
 ### 2.1 创建应用
 
@@ -54,7 +54,7 @@ Jaeger Client 是 OpenTracing API 规范的具体实现，目前业界标准已�
 
 初始化 Jaeger Tracer 时，需通过 CollectorEndpoint 配置上报地址，并在 HTTPHeaders 中添加认证 Header。
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/go-examples/jaeger-client-demo/main.go" target="_blank">jaeger-client-demo/main.go initJaeger</a> 提供了创建样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/jaeger-client-demo/main.go" target="_blank">jaeger-client-demo/main.go initJaeger</a> 提供了创建样例：
 
 ```go
 collectorEndpoint := ""
