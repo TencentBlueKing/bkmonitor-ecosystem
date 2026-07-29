@@ -50,7 +50,7 @@ docker build -t helloworld-python:latest .
 
 OpenTelemetry 提供标准化的框架和工具包，用于创建和管理 Traces、Metrics、Logs 数据。
 
-示例项目提供集成 OpenTelemetry Python SDK 并将观测数据发送到 bk-collector 的方式，可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/python-examples/helloworld/src/services/otlp.py" target="_blank">services/otlp.py</a> 进行接入。
+示例项目提供集成 OpenTelemetry Python SDK 并将观测数据发送到 bk-collector 的方式，可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/python-examples/helloworld/src/services/otlp.py" target="_blank">services/otlp.py</a> 进行接入。
 
 ### 2.3 关键配置
 
@@ -65,7 +65,7 @@ OpenTelemetry 提供标准化的框架和工具包，用于创建和管理 Trace
 | `endpoint` | 【必须】数据上报地址，请根据页面指引提供的接入地址进行填写。 |
 | `x-bk-token`| 【必须】APM 应用 Token，作为 headers 传递。 |
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/python-examples/helloworld/src/services/otlp.py" target="_blank">services/otlp.py _setup_traces</a> 提供了创建样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/python-examples/helloworld/src/services/otlp.py" target="_blank">services/otlp.py _setup_traces</a> 提供了创建样例：
 
 ```python
 def _setup_traces(self, resource: Resource):
@@ -142,7 +142,7 @@ template:
                 fieldPath: metadata.namespace
 ```
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/python-examples/helloworld/src/services/otlp.py" target="_blank">services/otlp.py _create_resource</a> 提供了创建样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/python-examples/helloworld/src/services/otlp.py" target="_blank">services/otlp.py _create_resource</a> 提供了创建样例：
 
 ```python
 from opentelemetry.sdk.resources import Resource, ResourceDetector, get_aggregated_resources, OsResourceDetector
@@ -197,7 +197,7 @@ class HelloWorldHandler:
             return self.generate_greeting(country)
 ```
 
-可以结合代码和下方说明进行使用：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/python-examples/helloworld/src/services/server.py" target="_blank">services/server.py</a>。
+可以结合代码和下方说明进行使用：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/python-examples/helloworld/src/services/server.py" target="_blank">services/server.py</a>。
 
 ### 3.1 Traces
 

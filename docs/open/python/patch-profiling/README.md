@@ -65,8 +65,8 @@ docker run -e TOKEN="xxx" \
 ### 3.1 Datadog SDK
 
 示例项目提供集成 Datadog Python SDK 并通过自定义导出器，将性能数据发送到 bk-collector 的方式。
-这是通过 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/python-examples/patch-profiling/src/patch.py" target="_blank">patch.py</a> 模块中的 patch_ddtrace_to_pyroscope 补丁实现的。其他项目如有同样需求，可以简单复制该模块来使用补丁。
-使用方法可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/python-examples/patch-profiling/src/main.py" target="_blank">main.py</a>:
+这是通过 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/python-examples/patch-profiling/src/patch.py" target="_blank">patch.py</a> 模块中的 patch_ddtrace_to_pyroscope 补丁实现的。其他项目如有同样需求，可以简单复制该模块来使用补丁。
+使用方法可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/python-examples/patch-profiling/src/main.py" target="_blank">main.py</a>:
 
 ```python
 from ddtrace.profiling.profiler import Profiler

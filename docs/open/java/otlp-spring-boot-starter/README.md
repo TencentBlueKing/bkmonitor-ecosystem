@@ -1,6 +1,6 @@
 # Java（Spring Boot OpenTelemetry 无侵入）接入
 
-本指南将帮助您通过 Zero-code Instrumentation 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/java-examples/spring-boot-starter" target="_blank">入门项目-spring-boot-starter</a> 为例，介绍调用链、指标、日志数据接入及 SDK 使用场景。
+本指南将帮助您通过 Zero-code Instrumentation 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/java-examples/spring-boot-starter" target="_blank">入门项目-spring-boot-starter</a> 为例，介绍调用链、指标、日志数据接入及 SDK 使用场景。
 
 入门项目功能齐全且可在开发环境运行，可以通过该项目快速入门 OpenTelemetry，接入并体验蓝鲸应用性能监控相关功能。
 
@@ -38,7 +38,7 @@ OpenTelemetry Spring Boot starter 利用 <a href="https://docs.spring.io/spring-
 
 - 不希望或无法使用 <a href="https://opentelemetry.io/docs/zero-code/java/agent/" target="_blank">Java Agent</a> 的场景。
 
-本节将介绍如何自动附加埋点到 SpringBoot 项目上。我们也提供了开发样例 —— <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/java-examples/spring-boot-starter" target="_blank">spring-boot-starter-demo</a> 演示这一过程。
+本节将介绍如何自动附加埋点到 SpringBoot 项目上。我们也提供了开发样例 —— <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/java-examples/spring-boot-starter" target="_blank">spring-boot-starter-demo</a> 演示这一过程。
 
 ### 2.1 创建应用
 
@@ -64,7 +64,7 @@ OpenTelemetry Spring Boot starter 可与 Spring Boot 2.6+ 和 Spring Boot 3.1+ �
 
 - `opentelemetry-spring-boot-starter`：OpenTelemetry starter 依赖，用于对 SpringBoot 项目进行自动埋点。
 
-<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/java-examples/spring-boot-starter/build.gradle.kts" target="_blank">Gradle（build.gradle.kts）示例：</a>
+<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/java-examples/spring-boot-starter/build.gradle.kts" target="_blank">Gradle（build.gradle.kts）示例：</a>
 
 ```kotlin
 import org.springframework.boot.gradle.plugin.SpringBootPlugin
@@ -196,7 +196,7 @@ public class TravelService {
 
 - 运行之前请记得执行 `docker build` 命令，参考本文 1.3 节。
 
-- 如果是本地开发测试，请确保您已运行快速验证 demo 数据上报逻辑，快速开始 👉 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/common/ob-all-in-one" target="_blank">ob-all-in-one</a>。
+- 如果是本地开发测试，请确保您已运行快速验证 demo 数据上报逻辑，快速开始 👉 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/common/ob-all-in-one" target="_blank">ob-all-in-one</a>。
 
 复制以下命令参数在你的终端运行：
 

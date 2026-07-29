@@ -53,9 +53,9 @@ OpenTelemetry 提供标准化的框架和工具包，用于创建和管理 Trace
 #### 2.2.1 Traces、Metrics、Logs 接入示例
 
 示例项目提供集成 OpenTelemetry Cpp SDK 并将观测数据发送到 bk-collector 的方式，可以参考下面的代码：
-* Traces：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/cpp-examples/helloworld/include/otlp/tracer_common.h" target="_blank">include/otlp/tracer_common.h</a>
-* Metrics：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/cpp-examples/helloworld/include/otlp/meter_common.h" target="_blank">include/otlp/meter_common.h</a>
-* Logs：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/cpp-examples/helloworld/include/otlp/logger_common.h" target="_blank">include/otlp/logger_common.h</a>
+* Traces：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/cpp-examples/helloworld/include/otlp/tracer_common.h" target="_blank">include/otlp/tracer_common.h</a>
+* Metrics：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/cpp-examples/helloworld/include/otlp/meter_common.h" target="_blank">include/otlp/meter_common.h</a>
+* Logs：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/cpp-examples/helloworld/include/otlp/logger_common.h" target="_blank">include/otlp/logger_common.h</a>
 
 在 `main` 文件中启动注册：
 
@@ -85,7 +85,7 @@ int main() {
 
 #### 2.2.2 构建
 
-引入 OpenTelemetry C++ SDK 需要重新编译项目，示例项目提供 Dockerfile 以供参考：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/cpp-examples/helloworld/Dockerfile" target="_blank">Dockerfile</a>。
+引入 OpenTelemetry C++ SDK 需要重新编译项目，示例项目提供 Dockerfile 以供参考：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/cpp-examples/helloworld/Dockerfile" target="_blank">Dockerfile</a>。
 
 ### 2.3 关键配置
 
@@ -100,7 +100,7 @@ int main() {
 | `endpoint` | 【必须】数据上报地址，请根据页面指引提供的接入地址进行填写。 |
 | `x-bk-token`| 【必须】APM 应用 Token，作为 headers 传递。 |
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/cpp-examples/helloworld/include/otlp/tracer_common.h" target="_blank">include/otlp/tracer_common.h</a> 提供了创建样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/cpp-examples/helloworld/include/otlp/tracer_common.h" target="_blank">include/otlp/tracer_common.h</a> 提供了创建样例：
 
 ```cpp
 #include "opentelemetry/exporters/otlp/otlp_http.h"
@@ -181,7 +181,7 @@ template:
                 fieldPath: metadata.namespace
 ```
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/cpp-examples/helloworld/include/otlp/resource_common.h" target="_blank">include/otlp/meter_common.h</a> 提供了创建样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/cpp-examples/helloworld/include/otlp/resource_common.h" target="_blank">include/otlp/meter_common.h</a> 提供了创建样例：
 
 ```cpp
 resource_sdk::Resource CreateResource(const Config &config) {
@@ -243,7 +243,7 @@ Handler::handleHelloWorld(const std::shared_ptr<HttpRequestHandler::IncomingRequ
 }
 ```
 
-可以结合代码和下方说明进行使用：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/cpp-examples/helloworld/src/server.cpp" target="_blank">src/server.cpp</a>。
+可以结合代码和下方说明进行使用：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/cpp-examples/helloworld/src/server.cpp" target="_blank">src/server.cpp</a>。
 
 #### 3.1.1 创建 Resource
 
@@ -269,7 +269,7 @@ namespace {
 }
 ```
 
-* 参考代码：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/cpp-examples/helloworld/include/otlp/resource_common.h" target="_blank">include/otlp/resource_common.h</a>
+* 参考代码：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/cpp-examples/helloworld/include/otlp/resource_common.h" target="_blank">include/otlp/resource_common.h</a>
 
 #### 3.1.2 创建 Span
 

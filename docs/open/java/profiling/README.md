@@ -81,7 +81,7 @@ docker run -e TOKEN="xxx" \
 implementation("io.pyroscope:agent:0.14.0")
 ```
 
-示例项目提供集成 Pyroscope Java SDK 并将性能数据发送到 bk-collector 的方式，可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/java-examples/helloworld/src/main/java/com/tencent/bkm/demo/helloworld/service/impl/profiling/ProfilingService.java" target="_blank">service/impl/profiling/ProfilingService.java</a> 进行接入：
+示例项目提供集成 Pyroscope Java SDK 并将性能数据发送到 bk-collector 的方式，可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/java-examples/helloworld/src/main/java/com/tencent/bkm/demo/helloworld/service/impl/profiling/ProfilingService.java" target="_blank">service/impl/profiling/ProfilingService.java</a> 进行接入：
 
 ```java
 this.pyroscopeConfig = new io.pyroscope.javaagent.config.Config.Builder()
@@ -102,7 +102,7 @@ this.pyroscopeConfig = new io.pyroscope.javaagent.config.Config.Builder()
 
 Pyroscope 支持同 OpenTelemetry 集成，将 Traces 和 Profiling 数据链接起来，从而实现分析具体跨度（Span）的资源使用情况的目的。
 
-在开始之前，可以阅读文档 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/java-examples/helloworld/README.md" target="_blank">Java（OpenTelemetry SDK）接入</a> 了解 OpenTelemetry。
+在开始之前，可以阅读文档 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/java-examples/helloworld/README.md" target="_blank">Java（OpenTelemetry SDK）接入</a> 了解 OpenTelemetry。
 
 在项目中引入依赖：
 

@@ -1,6 +1,6 @@
 # Python（OpenTelemetry Zero-code Instrumentation）接入
 
-本指南将帮助您通过 Zero-code Instrumentation 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/python-examples/helloworld-automatic/" target="_blank">入门项目-helloworld-automatic</a> 为例，介绍调用链、指标、日志数据接入及 SDK 使用场景。
+本指南将帮助您通过 Zero-code Instrumentation 接入蓝鲸应用性能监控，以 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/python-examples/helloworld-automatic/" target="_blank">入门项目-helloworld-automatic</a> 为例，介绍调用链、指标、日志数据接入及 SDK 使用场景。
 
 入门项目功能齐全且可在开发环境运行，可以通过该项目快速入门 OpenTelemetry，接入并体验蓝鲸应用性能监控相关功能。
 
@@ -32,7 +32,7 @@ docker build -t helloworld-automatic-python:latest .
 
 ## 2. 快速接入
 
-本节将介绍如何在现有项目基础上，自动探测并附加埋点到应用程序上。我们也通过 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/python-examples/helloworld-automatic/Dockerfile" target="_blank">Dockerfile</a> 演示了这一过程。
+本节将介绍如何在现有项目基础上，自动探测并附加埋点到应用程序上。我们也通过 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/python-examples/helloworld-automatic/Dockerfile" target="_blank">Dockerfile</a> 演示了这一过程。
 
 ### 2.1 创建应用
 
@@ -167,7 +167,7 @@ Zero-code Instrumentation 已自动设置 OpenTelemetry 所需的 Resource、Exp
 
 - 运行之前请记得执行 `docker build` 命令，参考本文 1.3 节。
 
-- 如果是本地开发测试，请确保您已运行快速验证 demo 数据上报逻辑，快速开始 👉 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/common/ob-all-in-one" target="_blank">ob-all-in-one</a>。
+- 如果是本地开发测试，请确保您已运行快速验证 demo 数据上报逻辑，快速开始 👉 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/common/ob-all-in-one" target="_blank">ob-all-in-one</a>。
 
 复制以下命令参数在你的终端运行：
 

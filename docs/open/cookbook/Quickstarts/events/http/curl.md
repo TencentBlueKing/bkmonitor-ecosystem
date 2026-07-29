@@ -53,7 +53,7 @@ cd bkmonitor-ecosystem/examples/events/curl
 
 ### 2.3 运行样例
 
-示例代码也可以在样例仓库 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/events/curl/report_event.sh" target="_blank">bkmonitor-ecosystem/examples/events/curl</a> 中找到。
+示例代码也可以在样例仓库 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/events/curl/report_event.sh" target="_blank">bkmonitor-ecosystem/examples/events/curl</a> 中找到。
 
 该样例通过命令行实现周期上报事件：
 

@@ -52,7 +52,7 @@ cd bkmonitor-ecosystem/examples/metrics/http/go
 
 ### 2.3 运行样例
 
-示例代码也可以在样例仓库 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/metrics/http/go" target="_blank">bkmonitor-ecosystem/examples/metrics/http/go</a> 中找到。
+示例代码也可以在样例仓库 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/metrics/http/go" target="_blank">bkmonitor-ecosystem/examples/metrics/http/go</a> 中找到。
 
 通过 docker build 构建名为 metrics-http-go 的镜像，并使用 docker run 运行容器，同时通过环境变量 TOKEN、DATA_ID、API_URL 传递配置参数，实现周期上报指标：
 
