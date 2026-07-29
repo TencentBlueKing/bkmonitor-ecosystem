@@ -1,0 +1,13 @@
+global:
+  namespace: Development
+  env_name: test
+
+server:
+  app: test
+  server: trpcagent
+  service:
+    - name: trpc.test.trpcagent.api
+      ip: 127.0.0.1
+      port: 8080
+      network: tcp
+      protocol: http_no_protocol
