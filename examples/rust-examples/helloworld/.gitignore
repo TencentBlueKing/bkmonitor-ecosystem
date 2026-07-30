@@ -1,0 +1,5 @@
+# Local observability credentials and endpoints.
+dev.env
+
+# 可执行示例需要提交锁文件，以保证 `cargo build --locked` 可复现。
+!Cargo.lock

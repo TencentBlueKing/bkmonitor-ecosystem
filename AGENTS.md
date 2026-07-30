@@ -6,7 +6,7 @@
 
 ## 0x01 项目定位
 
-- `bkmonitor-ecosystem` 提供最小化、开箱即用的观测数据接入 demo，覆盖 Go、Python、Java、JavaScript 和 C++。
+- `bkmonitor-ecosystem` 提供最小化、开箱即用的观测数据接入 demo，覆盖 Go、Python、Java、JavaScript、C++ 和 Rust。
 - 项目同时包含文档模板、渲染脚本和多语言示例。
 
 ## 0x02 判断是否处于内部版
