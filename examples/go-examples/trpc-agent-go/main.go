@@ -29,7 +29,7 @@ import (
 	atrace "trpc.group/trpc-go/trpc-agent-go/telemetry/trace"
 	"trpc.group/trpc-go/trpc-agent-go/tool"
 	"trpc.group/trpc-go/trpc-agent-go/tool/function"
-	"trpc.group/trpc-go/trpc-go"
+	trpc "trpc.group/trpc-go/trpc-go"
 	thttp "trpc.group/trpc-go/trpc-go/http"
 )
 
