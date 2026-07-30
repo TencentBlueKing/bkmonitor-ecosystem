@@ -12,12 +12,16 @@ It exposes:
 Configure the model provider and BlueKing APM connection, then run:
 
 ```bash
-export OPENAI_API_KEY="<your-api-key>"
-export OPENAI_BASE_URL="<your-compatible-base-url>"
-export OTLP_ENDPOINT="<host:port>"
-export TOKEN="<your-apm-token>"
-export SERVICE_NAME="trpc-agent-go-demo"
-go run .
+docker build -t trpc-agent-go-apm:latest .
+
+docker run --rm --name trpc-agent-go-demo \
+  -p 8080:8080 \
+  -e OTLP_ENDPOINT="<host:port>" \
+  -e TOKEN="<your-apm-token>" \
+  -e SERVICE_NAME="trpc-agent-go-demo" \
+  -e OPENAI_API_KEY="<your-api-key>" \
+  -e OPENAI_BASE_URL="<your-compatible-base-url>" \
+  trpc-agent-go-apm:latest
 ```
 
 After startup, `loopQuery` calls the local agent every three seconds so traces, metrics, and one LLM-to-tool call can be verified in BlueKing APM.

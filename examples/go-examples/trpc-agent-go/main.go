@@ -92,12 +92,14 @@ func setupTelemetry(ctx context.Context) (func() error, error) {
 		otelServiceName = serviceName
 	}
 
+	// ❗❗【非常重要】请将 APM 应用 Token 作为 x-bk-token Header 传入。
 	metricHeaders := "x-bk-token=" + url.QueryEscape(token)
 	if err := os.Setenv("OTEL_EXPORTER_OTLP_METRICS_HEADERS", metricHeaders); err != nil {
 		return nil, fmt.Errorf("set metrics headers: %w", err)
 	}
 	meterProvider, err := ametric.NewMeterProvider(
 		ctx,
+		// ❗❗【非常重要】请填写 APM 接入指引提供的 HTTP OTLP 地址，格式为 host:port。
 		ametric.WithEndpoint(endpoint),
 		ametric.WithProtocol("http"),
 		ametric.WithServiceName(otelServiceName),
@@ -112,8 +114,10 @@ func setupTelemetry(ctx context.Context) (func() error, error) {
 
 	shutdownTrace, err := atrace.Start(
 		ctx,
+		// ❗❗【非常重要】请填写 APM 接入指引提供的 HTTP OTLP 地址，格式为 host:port。
 		atrace.WithEndpoint(endpoint),
 		atrace.WithProtocol("http"),
+		// ❗❗【非常重要】请将 APM 应用 Token 作为 x-bk-token Header 传入。
 		atrace.WithHeaders(map[string]string{"x-bk-token": token}),
 		atrace.WithServiceName(otelServiceName),
 	)

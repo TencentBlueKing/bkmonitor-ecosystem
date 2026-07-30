@@ -104,20 +104,24 @@ shutdownTelemetry, err := setupTelemetry(ctx)
 if err != nil {
     log.Fatalf("failed to set up telemetry: %v", err)
 }
-defer shutdownTelemetry()
+defer func() {
+    if err := shutdownTelemetry(); err != nil {
+        log.Errorf("failed to shut down telemetry: %v", err)
+    }
+}()
 
 agent := newAgent()
 ```
 
 ### 2.3 关联配置
 
-| 环境变量 | 必需 | 说明 |
-| --- | --- | --- |
-| `OTLP_ENDPOINT` | 是 | APM 接入指引提供的 HTTP OTLP 地址，格式为 `host:port`，不包含 Scheme 和 `/v1/*` 路径。 |
-| `TOKEN` | 是 | APM 接入指引提供的应用 Token。 |
-| `SERVICE_NAME` | 否 | APM 服务名；未设置时使用代码中的 `serviceName`。 |
-| `OPENAI_API_KEY` | 是 | OpenAI 兼容模型服务的 API Key。 |
-| `OPENAI_BASE_URL` | 否 | OpenAI 兼容模型服务的 Base URL。 |
+| 环境变量 | 必需 | 推荐值 | 说明 |
+| --- | --- | --- | --- |
+| `OTLP_ENDPOINT` | 是 | `"{{access_config.otlp.http_endpoint_without_schema}}"` | APM 接入指引提供的 HTTP OTLP 地址，格式为 `host:port`，不包含 `http://`。其他环境、跨云场景请根据页面接入指引填写。 |
+| `TOKEN` | 是 | `"{{access_config.token}}"` | APM 接入指引提供的应用 Token。 |
+| `SERVICE_NAME` | 否 | `"{{service_name}}"` | APM 服务名；未设置时使用代码中的 `serviceName`。 |
+| `OPENAI_API_KEY` | 是 | `<模型 API Key>` | OpenAI 兼容模型服务的 API Key。 |
+| `OPENAI_BASE_URL` | 否 | `<OpenAI 兼容 Base URL>` | OpenAI 兼容模型服务的 Base URL。 |
 
 APM 不需要额外的 tRPC-Go Plugin 配置，服务继续使用常规 `trpc_go.yaml`。
 
@@ -126,17 +130,33 @@ APM 不需要额外的 tRPC-Go Plugin 配置，服务继续使用常规 `trpc_go
 ```shell
 git clone {{ECOSYSTEM_REPOSITORY_URL}}
 cd {{ECOSYSTEM_REPOSITORY_NAME}}/examples/go-examples/trpc-agent-go
+docker build -t trpc-agent-go-apm:latest .
 
-export OTLP_ENDPOINT="<HTTP OTLP host:port>"
-export TOKEN="<APM 应用 Token>"
-export SERVICE_NAME="trpc-agent-go-demo"
-export OPENAI_API_KEY="<模型 API Key>"
-export OPENAI_BASE_URL="<可选的 OpenAI 兼容 Base URL>"
-
-go run .
+docker run --rm --name trpc-agent-go-demo \
+  -p 8080:8080 \
+  -e OTLP_ENDPOINT="{{access_config.otlp.http_endpoint_without_schema}}" \
+  -e TOKEN="{{access_config.token}}" \
+  -e SERVICE_NAME="{{service_name}}" \
+  -e OPENAI_API_KEY="<模型 API Key>" \
+  -e OPENAI_BASE_URL="<可选的 OpenAI 兼容 Base URL>" \
+  trpc-agent-go-apm:latest
 ```
 
 Demo 会启动 tRPC-Agent HTTP 服务，并通过 `loopQuery` 周期请求本地 Agent，持续产生 Traces 和 Metrics。
+
+### 2.5 LLM 指标
+
+tRPC Agent Go 会自动上报以下指标：
+
+| 指标 | 说明 |
+| --- | --- |
+| `trpc_agent_go.client.request_cnt` | Agent、模型或工具请求次数。 |
+| `gen_ai.client.operation.duration` | GenAI 操作耗时。 |
+| `gen_ai.client.token.usage` | 输入、输出和缓存 Token 用量。 |
+| `gen_ai.server.time_to_first_token` | 流式响应首 Token 耗时。 |
+| `trpc_agent_go.client.time_per_output_token` | 平均每个输出 Token 的耗时。 |
+| `trpc_agent_go.client.output_token_per_time` | 单位时间的输出 Token 数。 |
+| `gen_ai.workflow.elapsed_time` | Workflow 生命周期区间耗时。 |
 
 ## 3. 查看数据
 
