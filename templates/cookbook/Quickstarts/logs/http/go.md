@@ -182,13 +182,16 @@ func buildPayload() Payload {
                         {
                                 Resource: Resource{
                                         Attributes: []Attribute{
-                                                {Key: "service.name", Value: ValueObject{StringValue: "custom-log-demo"}},
-                                                {Key: "deployment.environment.name", Value: ValueObject{StringValue: "local"}},
+                                                {Key: "service.name",
+                                                 Value: ValueObject{StringValue: "custom-log-demo"}},
+                                                {Key: "deployment.environment.name",
+                                                 Value: ValueObject{StringValue: "local"}},
                                         },
                                 },
                                 ScopeLogs: []ScopeLog{
                                         {
-                                                Scope: Scope{Name: "custom-log-demo"}, // instrumentation scope 名称，标识日志产生组件
+                                                Scope: Scope{Name: "custom-log-demo"},
+                                                // instrumentation scope 名称，标识日志产生组件
                                                 LogRecords: []LogRecord{
                                                         {
                                                                 TimeUnixNano:         currentNano,
@@ -197,7 +200,8 @@ func buildPayload() Payload {
                                                                 SeverityText:         level.SeverityText,
                                                                 Body:                 Body{StringValue: level.Message},
                                                                 Attributes: []Attribute{
-                                                                        {Key: "demo.source", Value: ValueObject{StringValue: "golang"}},
+                                                                        {Key: "demo.source",
+                                                                         Value: ValueObject{StringValue: "golang"}},
                                                                 },
                                                         },
                                                 },
