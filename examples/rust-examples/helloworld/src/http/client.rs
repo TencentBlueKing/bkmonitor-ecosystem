@@ -8,53 +8,30 @@
 
 //! 定时发起请求、为示例持续产生观测数据的内置客户端。
 
-use opentelemetry::{global, trace::Status};
-use opentelemetry_http::HeaderInjector;
+use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
+use reqwest_tracing::TracingMiddleware;
 use tokio::time::sleep;
-use tracing::Instrument;
-use tracing_opentelemetry::OpenTelemetrySpanExt;
 
-use super::{set_http_request_attributes, set_http_response_attributes};
-
-async fn query_hello_world(client: &reqwest::Client, url: &str) {
-    let span = tracing::info_span!("Caller/queryHelloWorld", otel.kind = "client");
-    set_http_request_attributes(&span);
-
-    let mut request = match client.get(url).build() {
-        Ok(request) => request,
-        Err(error) => {
-            span.set_status(Status::error(error.to_string()));
-            tracing::error!(%error, "[query_hello_world] got error");
-            return;
+async fn query_hello_world(client: &ClientWithMiddleware, url: &str) {
+    tracing::info!("[query_hello_world] send request");
+    match client.get(url).send().await {
+        Ok(response) => {
+            tracing::info!(
+                status = %response.status(),
+                "[query_hello_world] received response"
+            )
         }
-    };
-    global::get_text_map_propagator(|propagator| {
-        propagator.inject_context(&span.context(), &mut HeaderInjector(request.headers_mut()));
-    });
-
-    async {
-        tracing::info!("[query_hello_world] send request");
-        match client.execute(request).await {
-            Ok(response) => {
-                set_http_response_attributes(&tracing::Span::current(), response.status());
-                tracing::info!(
-                    status = %response.status(),
-                    "[query_hello_world] received response"
-                )
-            }
-            Err(error) => {
-                tracing::Span::current().set_status(Status::error(error.to_string()));
-                tracing::error!(%error, "[query_hello_world] got error");
-            }
+        Err(error) => {
+            tracing::error!(%error, "[query_hello_world] got error");
         }
     }
-    .instrument(span)
-    .await;
 }
 
 /// loop_query_hello_world 定期循环调用 HelloWorld 服务。
 pub async fn loop_query_hello_world(url: String) {
-    let client = reqwest::Client::new();
+    let client = ClientBuilder::new(reqwest::Client::new())
+        .with(TracingMiddleware::default())
+        .build();
     loop {
         sleep(std::time::Duration::from_secs(3)).await;
         query_hello_world(&client, &url).await;

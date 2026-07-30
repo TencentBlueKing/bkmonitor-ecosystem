@@ -50,7 +50,7 @@ docker build -t helloworld-rust:latest .
 
 OpenTelemetry 提供标准化的框架和工具包，用于创建和管理 Traces、Metrics、Logs 数据。
 
-示例项目提供集成 OpenTelemetry Rust SDK 并将观测数据发送到 bk-collector 的方式，可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/rust-examples/helloworld/src/telemetry/setup.rs" target="_blank">src/telemetry/setup.rs</a> 进行接入。
+示例项目提供集成 OpenTelemetry Rust SDK 并将观测数据发送到 bk-collector 的方式，可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/rust-examples/helloworld/src/telemetry/setup.rs" target="_blank">src/telemetry/setup.rs</a> 进行接入。
 
 ### 2.3 关键配置
 
@@ -65,7 +65,7 @@ OpenTelemetry 提供标准化的框架和工具包，用于创建和管理 Trace
 | `endpoint` | 【必须】数据上报地址，请根据页面指引提供的接入地址进行填写。 |
 | `x-bk-token`| 【必须】APM 应用 Token，作为 headers 传递。 |
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/rust-examples/helloworld/src/telemetry/setup.rs" target="_blank">src/telemetry/setup.rs setup</a> 提供了创建样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/rust-examples/helloworld/src/telemetry/setup.rs" target="_blank">src/telemetry/setup.rs setup</a> 提供了创建样例：
 
 ```rust
 use std::collections::HashMap;
@@ -90,7 +90,7 @@ let exporter = opentelemetry_otlp::SpanExporter::builder()
     .build()?;
 ```
 
-指标、日志的配置方式和上述一致，请参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/rust-examples/helloworld/src/telemetry/setup.rs" target="_blank">src/telemetry/setup.rs</a> 中的 `MetricExporter`、`LogExporter` 初始化代码。
+指标、日志的配置方式和上述一致，请参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/rust-examples/helloworld/src/telemetry/setup.rs" target="_blank">src/telemetry/setup.rs</a> 中的 `MetricExporter`、`LogExporter` 初始化代码。
 
 如果没有在 SDK builder 中显式调用 `with_headers`，`x-bk-token` 也可以通过「环境变量」的方式进行配置：
 
@@ -150,7 +150,7 @@ template:
                 fieldPath: metadata.namespace
 ```
 
-示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/rust-examples/helloworld/src/telemetry/setup.rs" target="_blank">src/telemetry/setup.rs setup</a> 提供了创建样例：
+示例项目在 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/rust-examples/helloworld/src/telemetry/setup.rs" target="_blank">src/telemetry/setup.rs setup</a> 提供了创建样例：
 
 ```rust
 use opentelemetry_sdk::Resource;
@@ -162,34 +162,71 @@ let resource = Resource::builder()
     .build();
 ```
 
+### 2.4 OpenTelemetry 组件埋点工具
+
+接入 Web 框架、HTTP 客户端、数据库或消息队列时，先在 <a href="https://github.com/open-telemetry/opentelemetry-rust-contrib" target="_blank">OpenTelemetry Rust Contrib</a> 和组件自身文档中查找 instrumentation。已有成熟组件时，优先使用组件完成协议层 Span、语义属性、指标和上下文传播；手动 Span 留给业务操作。
+
+#### 2.4.1 查找已有埋点组件
+
+OpenTelemetry Rust Contrib 中常用的 HTTP instrumentation：
+
+| 库或框架 | Contrib 组件 |
+| --- | --- |
+| Actix Web | <a href="https://github.com/open-telemetry/opentelemetry-rust-contrib/tree/main/opentelemetry-instrumentation-actix-web" target="_blank">opentelemetry-instrumentation-actix-web</a> |
+| Tower、Axum、Hyper、Tonic | <a href="https://github.com/open-telemetry/opentelemetry-rust-contrib/tree/main/opentelemetry-instrumentation-tower" target="_blank">opentelemetry-instrumentation-tower</a> |
+
+如果 Contrib 中没有对应组件，再检查目标库的官方文档和社区中间件。只有在缺少成熟方案时，才自行实现协议层 Span、语义属性和上下文传播。
+
+#### 2.4.2 Actix Web 服务端示例
+
+Actix Web 可以使用 OpenTelemetry Rust Contrib 中的 `opentelemetry-instrumentation-actix-web`。在 `Cargo.toml` 中引入依赖：
+
+```toml
+[dependencies]
+actix-web = "4.12"
+opentelemetry-instrumentation-actix-web = "0.24"
+```
+
+通过 middleware 自动创建服务端 HTTP Span 和指标：
+
+```rust
+use actix_web::{web, App, HttpServer};
+use opentelemetry_instrumentation_actix_web::{
+    RequestMetrics,
+    RequestTracing,
+};
+
+HttpServer::new(|| {
+    App::new()
+        .wrap(RequestTracing::new())
+        .wrap(RequestMetrics::default())
+        .route("/helloworld", web::get().to(hello_world))
+})
+.bind(("0.0.0.0", 8080))?
+.run()
+.await?;
+```
+
+* <a href="https://github.com/open-telemetry/opentelemetry-rust-contrib/tree/main/opentelemetry-instrumentation-actix-web" target="_blank">Actix Web instrumentation</a>
+
 ## 3. 使用场景
 
 示例项目整理常见的使用场景，集中在：
 
 ```rust
-async fn hello_world(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-) -> Result<String, (StatusCode, String)> {
-    let parent_context = global::get_text_map_propagator(|propagator| {
-        propagator.extract(&HeaderExtractor(&headers))
-    });
-    let span = tracing::info_span!("Handle/HelloWorld", otel.kind = "server");
-    set_http_request_attributes(&span);
-    if let Err(error) = span.set_parent(parent_context) {
-        tracing::warn!(%error, "设置服务端调用链父上下文失败");
-    }
+async fn hello_world() -> HttpResponse {
+    let span = tracing::info_span!("Handle/HelloWorld");
     let _entered = span.enter();
 
     // Logs（日志）
     logs_demo();
 
     let mut rng = rand::rng();
-    let country = COUNTRIES[rng.random_range(0..COUNTRIES.len())];
-    tracing::info!(country = country.as_str(), "选择国家");
+    let country = choice_country(&mut rng);
+    tracing::info!(country, "选择国家");
 
     // Metrics（指标） - Counter 类型
-    metrics_counter_demo(country.as_str());
+    metrics_counter_demo(country);
     // Metrics（指标） - Histograms 类型
     metrics_histogram_demo();
     // Metrics（指标） - 调用分析场景
@@ -205,20 +242,15 @@ async fn hello_world(
     // Traces（调用链）- Span Links
     traces_span_links_demo();
     // Traces（调用链）- 模拟错误
-    if rng.random::<f64>() < state.error_rate {
-        let error = traces_random_error_demo(&mut rng);
-        let response = Err((StatusCode::INTERNAL_SERVER_ERROR, error.as_str().to_owned()));
-        set_http_response_attributes(&span, StatusCode::INTERNAL_SERVER_ERROR);
-        response
-    } else {
-        let response = Ok(format!("Hello World, {}!", country.as_str()));
-        set_http_response_attributes(&span, StatusCode::OK);
-        response
+    if let Err(error) = traces_random_error_demo(&mut rng) {
+        return HttpResponse::InternalServerError().body(error.to_string());
     }
+
+    HttpResponse::Ok().body(generate_greeting(country))
 }
 ```
 
-可以结合代码和下方说明进行使用：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/main/examples/rust-examples/helloworld/src/http/server.rs" target="_blank">src/http/server.rs</a>。
+可以结合代码和下方说明进行使用：<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/rust-examples/helloworld/src/http/server.rs" target="_blank">src/http/server.rs</a>。
 
 ### 3.1 Traces
 

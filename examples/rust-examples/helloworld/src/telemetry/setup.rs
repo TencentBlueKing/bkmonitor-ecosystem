@@ -148,7 +148,9 @@ pub fn setup(config: &AppConfig) -> Result<TelemetryGuard, Box<dyn std::error::E
     tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer())
         .with(trace_layer.with_filter(filter_fn(|metadata| {
-            metadata.target() == "helloworld" || metadata.target().starts_with("helloworld::")
+            metadata.target() == "helloworld"
+                || metadata.target().starts_with("helloworld::")
+                || metadata.target().starts_with("reqwest_tracing")
         })))
         .with(log_layer.with_filter(filter_fn(|metadata| {
             metadata.target() == "helloworld" || metadata.target().starts_with("helloworld::")

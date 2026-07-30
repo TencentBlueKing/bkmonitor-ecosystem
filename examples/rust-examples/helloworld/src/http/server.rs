@@ -10,138 +10,63 @@
 
 use std::sync::OnceLock;
 
-use axum::{
-    extract::State,
-    http::{HeaderMap, StatusCode},
-    routing::get,
-    Router,
-};
+use actix_web::{web, HttpResponse};
 use opentelemetry::{
     global,
     metrics::ObservableGauge,
     trace::{Status, TraceContextExt},
     Context, KeyValue,
 };
-use opentelemetry_http::HeaderExtractor;
 use rand::Rng;
 use tracing::Instrument;
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 
-use super::{set_http_request_attributes, set_http_response_attributes};
-
 static MEMORY_USAGE: OnceLock<ObservableGauge<f64>> = OnceLock::new();
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Country {
-    UnitedStates,
-    Canada,
-    UnitedKingdom,
-    Germany,
-    France,
-    Japan,
-    Australia,
-    China,
-    India,
-    Brazil,
-}
-
-impl Country {
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::UnitedStates => "United States",
-            Self::Canada => "Canada",
-            Self::UnitedKingdom => "United Kingdom",
-            Self::Germany => "Germany",
-            Self::France => "France",
-            Self::Japan => "Japan",
-            Self::Australia => "Australia",
-            Self::China => "China",
-            Self::India => "India",
-            Self::Brazil => "Brazil",
-        }
-    }
-}
-
-pub const COUNTRIES: [Country; 10] = [
-    Country::UnitedStates,
-    Country::Canada,
-    Country::UnitedKingdom,
-    Country::Germany,
-    Country::France,
-    Country::Japan,
-    Country::Australia,
-    Country::China,
-    Country::India,
-    Country::Brazil,
+const COUNTRIES: [&str; 10] = [
+    "United States",
+    "Canada",
+    "United Kingdom",
+    "Germany",
+    "France",
+    "Japan",
+    "Australia",
+    "China",
+    "India",
+    "Brazil",
 ];
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum DemoError {
-    MySqlConnectTimeout,
-    UserNotFound,
-    NetworkUnreachable,
-    FileNotFound,
+const ERROR_MESSAGES: [&str; 4] = [
+    "mysql connect timeout",
+    "user not found",
+    "network unreachable",
+    "file not found",
+];
+
+pub fn configure_routes(config: &mut web::ServiceConfig) {
+    config
+        .route("/helloworld", web::get().to(hello_world))
+        .route("/healthz", web::get().to(healthz));
 }
 
-impl DemoError {
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::MySqlConnectTimeout => "mysql connect timeout",
-            Self::UserNotFound => "user not found",
-            Self::NetworkUnreachable => "network unreachable",
-            Self::FileNotFound => "file not found",
-        }
-    }
-}
-
-impl std::fmt::Display for DemoError {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str(self.as_str())
-    }
-}
-
-impl std::error::Error for DemoError {}
-
-#[derive(Clone, Copy, Debug)]
-pub struct AppState {
-    pub error_rate: f64,
-}
-
-pub fn app(state: AppState) -> Router {
-    Router::new()
-        .route("/helloworld", get(hello_world))
-        .route("/healthz", get(healthz))
-        .with_state(state)
-}
-
-async fn healthz() -> StatusCode {
-    StatusCode::NO_CONTENT
+async fn healthz() -> HttpResponse {
+    HttpResponse::NoContent().finish()
 }
 
 // hello_world 处理 HTTP 请求并返回问候语
-async fn hello_world(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-) -> Result<String, (StatusCode, String)> {
-    let parent_context = global::get_text_map_propagator(|propagator| {
-        propagator.extract(&HeaderExtractor(&headers))
-    });
-    let span = tracing::info_span!("Handle/HelloWorld", otel.kind = "server");
-    set_http_request_attributes(&span);
-    if let Err(error) = span.set_parent(parent_context) {
-        tracing::warn!(%error, "设置服务端调用链父上下文失败");
-    }
+async fn hello_world() -> HttpResponse {
+    let span = tracing::info_span!("Handle/HelloWorld");
     let _entered = span.enter();
 
     // Logs（日志）
     logs_demo();
 
     let mut rng = rand::rng();
-    let country = COUNTRIES[rng.random_range(0..COUNTRIES.len())];
-    tracing::info!(country = country.as_str(), "选择国家");
+    let country = choice_country(&mut rng);
+    tracing::info!(country, "选择国家");
 
     // Metrics（指标） - Counter 类型
-    metrics_counter_demo(country.as_str());
+    metrics_counter_demo(country);
     // Metrics（指标） - Histograms 类型
     metrics_histogram_demo();
     // Metrics（指标） - 调用分析场景
@@ -157,21 +82,32 @@ async fn hello_world(
     // Traces（调用链）- Span Links
     traces_span_links_demo();
     // Traces（调用链）- 模拟错误
-    if rng.random::<f64>() < state.error_rate {
-        let error = traces_random_error_demo(&mut rng);
-        let response = Err((StatusCode::INTERNAL_SERVER_ERROR, error.as_str().to_owned()));
-        set_http_response_attributes(&span, StatusCode::INTERNAL_SERVER_ERROR);
-        response
-    } else {
-        let response = Ok(format!("Hello World, {}!", country.as_str()));
-        set_http_response_attributes(&span, StatusCode::OK);
-        response
+    if let Err(error) = traces_random_error_demo(&mut rng) {
+        return HttpResponse::InternalServerError().body(error.to_string());
     }
+
+    HttpResponse::Ok().body(generate_greeting(country))
 }
 
 fn do_something(max_ms: u64) {
     let sleep_ms = 10 + rand::rng().random_range(0..max_ms);
     std::thread::sleep(std::time::Duration::from_millis(sleep_ms));
+}
+
+fn choice_country(rng: &mut impl Rng) -> &'static str {
+    COUNTRIES[rng.random_range(0..COUNTRIES.len())]
+}
+
+fn choice_error(rng: &mut impl Rng) -> std::io::Error {
+    std::io::Error::other(ERROR_MESSAGES[rng.random_range(0..ERROR_MESSAGES.len())])
+}
+
+fn generate_greeting(country: &str) -> String {
+    format!("Hello World, {country}!")
+}
+
+fn random_error(rng: &mut impl Rng, error_rate: f64) -> Option<std::io::Error> {
+    (rng.random::<f64>() < error_rate).then(|| choice_error(rng))
 }
 
 // logs_demo Logs（日志）打印日志
@@ -345,18 +281,13 @@ fn traces_span_links_demo() {
 
 // traces_random_error_demo Traces（调用链）- 异常事件、状态
 // Refer: https://docs.rs/opentelemetry/0.32.0/opentelemetry/trace/trait.Span.html#method.record_error
-fn traces_random_error_demo(rng: &mut impl Rng) -> DemoError {
-    let error = DEMO_ERRORS[rng.random_range(0..DEMO_ERRORS.len())];
+fn traces_random_error_demo(rng: &mut impl Rng) -> Result<(), std::io::Error> {
+    let Some(error) = random_error(rng, 0.1) else {
+        return Ok(());
+    };
     let span = tracing::Span::current();
     span.set_status(Status::error(error.to_string()));
     span.context().span().record_error(&error);
     tracing::error!(%error, "[traces_random_error_demo] got error");
-    error
+    Err(error)
 }
-
-const DEMO_ERRORS: [DemoError; 4] = [
-    DemoError::MySqlConnectTimeout,
-    DemoError::UserNotFound,
-    DemoError::NetworkUnreachable,
-    DemoError::FileNotFound,
-];

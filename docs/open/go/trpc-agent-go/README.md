@@ -178,5 +178,5 @@ tRPC Agent Go 会自动上报以下指标：
 
 * <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem" target="_blank">各语言、框架接入代码样例</a>
 * <a href="https://github.com/trpc-group/trpc-agent-go" target="_blank">tRPC Agent Go</a>
-* <a href="https://github.com/trpc-group/trpc-go" target="_blank">tRPC-Go</a>
+* * <a href="https://github.com/trpc-group/trpc-go" target="_blank">tRPC-Go</a>* <a href="https://github.com/trpc-group/trpc-go" target="_blank">tRPC-Go</a>
 * <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/trpc-agent-go" target="_blank">本接入样例源码</a>

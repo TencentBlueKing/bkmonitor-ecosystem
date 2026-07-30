@@ -10,12 +10,10 @@
 
 use std::error::Error;
 
-use helloworld::http::{
-    client::loop_query_hello_world,
-    server::{app, AppState},
-};
+use actix_web::{App, HttpServer};
+use helloworld::http::{client::loop_query_hello_world, server::configure_routes};
 use helloworld::{config::AppConfig, telemetry};
-use tokio::net::TcpListener;
+use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 
 #[cfg(unix)]
 async fn shutdown_signal() -> std::io::Result<()> {
@@ -38,7 +36,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let config = AppConfig::from_env();
     let telemetry = telemetry::setup(&config)?;
 
-    let listener = TcpListener::bind((&config.server_address[..], config.server_port)).await?;
+    let server = HttpServer::new(|| {
+        App::new()
+            .wrap(RequestTracing::new())
+            .wrap(RequestMetrics::default())
+            .configure(configure_routes)
+    })
+    .bind((&config.server_address[..], config.server_port))?
+    .disable_signals()
+    .run();
+    let server_handle = server.handle();
     let client_task = tokio::spawn(loop_query_hello_world(format!(
         "http://{}:{}/helloworld",
         config.server_address, config.server_port
@@ -48,12 +55,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
         "HelloWorld server listening on http://{}:{}",
         config.server_address, config.server_port
     );
-    tokio::select! {
-        result = axum::serve(listener, app(AppState { error_rate: 0.1 })) => result?,
-        signal = shutdown_signal() => signal?,
-    }
+    let server_result = tokio::select! {
+        result = server => result,
+        signal_result = shutdown_signal() => {
+            server_handle.stop(true).await;
+            signal_result
+        },
+    };
 
     client_task.abort();
+    let _ = client_task.await;
     telemetry.shutdown();
+    server_result?;
     Ok(())
 }
