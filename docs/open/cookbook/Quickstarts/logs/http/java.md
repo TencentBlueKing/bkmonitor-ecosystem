@@ -158,7 +158,9 @@ public class Main {
             try {
                 Map<String, Object> level = getRandomLevel();
                 Map<String, Object> payload = buildPayload(level);
-                LOGGER.info("Sending log level: " + level.get("severityText") + " (" + level.get("severityNumber") + ")");
+                String logLevelMsg = "Sending log level: " + level.get("severityText")
+                        + " (" + level.get("severityNumber") + ")";
+                LOGGER.info(logLevelMsg);
                 doPost(client, apiUrl, token, payload);
                 Thread.sleep(100);
             } catch (IOException e) {
@@ -175,8 +177,8 @@ public class Main {
      * 获取当前时间的纳秒时间戳
      */
     private static String getCurrentNanoTimestamp() {
-        return String.valueOf(System.currentTimeMillis() * 1_000_000L +
-                (System.nanoTime() % 1_000_000L));
+        return String.valueOf(System.currentTimeMillis() * 1_000_000L
+                + (System.nanoTime() % 1_000_000L));
     }
 
     /**
