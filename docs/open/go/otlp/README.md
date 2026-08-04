@@ -178,14 +178,71 @@ func (s *Service) newResource() (*resource.Resource, error) {
 }
 ```
 
+### 2.4 OpenTelemetry 组件埋点工具
+
+接入 Web 框架、HTTP 客户端、数据库或消息队列时，先在 <a href="https://github.com/open-telemetry/opentelemetry-go-contrib" target="_blank">OpenTelemetry Go Contrib</a> 和组件自身文档中查找 instrumentation。已有成熟组件时，优先使用组件完成协议层 Span、语义属性、指标和上下文传播；手动 Span 留给业务操作。
+
+Go 的组件埋点需要在创建路由器、HTTP 服务或 HTTP 客户端时显式接入中间件或 Transport，但组件会自动为请求创建 Span，无需在每个请求处理函数中手动调用 `tracer.Start`。
+
+#### 2.4.1 查找已有埋点组件
+
+OpenTelemetry Go Contrib 中常用的 HTTP instrumentation：
+
+| 库或框架 | Contrib 组件 |
+| --- | --- |
+| `net/http` 服务端、客户端 | <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp" target="_blank">otelhttp</a> |
+| Gorilla Mux | <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux" target="_blank">otelmux</a> |
+
+如果 Contrib 中没有对应组件，再检查目标库的官方文档和社区中间件。只有在缺少成熟方案时，才自行实现协议层 Span、语义属性和上下文传播。
+
+#### 2.4.2 Gorilla Mux 服务端与 HTTP 客户端示例
+
+示例项目使用 `otelmux` 为 Gorilla Mux 路由自动创建服务端 HTTP Span，并使用 `otelhttp` 为出站 HTTP 请求自动创建客户端 Span。两个组件的版本需要保持一致：
+
+```go
+require (
+	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.54.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0
+)
+```
+
+在路由器中注册 `otelmux` 中间件，HTTP 服务直接使用该路由器：
+
+```go
+router := mux.NewRouter()
+router.Use(otelmux.Middleware(Name))
+router.HandleFunc("/helloworld", HelloWorld).Methods(http.MethodGet)
+
+server := &http.Server{
+	Handler: router,
+}
+```
+
+发送 HTTP 请求时，为客户端设置 `otelhttp` Transport：
+
+```go
+client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
+req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+if err != nil {
+	return err
+}
+
+res, err := client.Do(req)
+```
+
+请求处理函数可直接从 `req.Context()` 获取组件创建的 Span；例如记录异常时使用 `trace.SpanFromContext(ctx)`，无需为 HTTP 请求额外创建手动 Span。
+
+* <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux" target="_blank">Gorilla Mux instrumentation</a>
+* <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp" target="_blank">net/http instrumentation</a>
+
 ## 3. 使用场景
 
 示例项目整理常见的使用场景，集中在：
 
 ```go
 func HelloWorld(w http.ResponseWriter, req *http.Request) {
-	ctx, span := tracer.Start(req.Context(), "Handle/HelloWorld")
-	defer span.End()
+	ctx := req.Context()
+	span := trace.SpanFromContext(ctx)
 
 	// Logs（日志）
 	logsDemo(ctx, req)

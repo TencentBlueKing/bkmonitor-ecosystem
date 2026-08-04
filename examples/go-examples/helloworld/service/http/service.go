@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 
 	"bk-apm/bkmonitor-ecosystem/examples/go-examples/helloworld/config"
 	"bk-apm/bkmonitor-ecosystem/examples/go-examples/helloworld/define"
@@ -33,6 +33,8 @@ type routerManager struct {
 var routerMgr = &routerManager{httpRouter: mux.NewRouter(), httpRoutes: map[string]define.RouteInfo{}}
 
 func init() {
+	// 使用路由模板作为 Span 名称，并自动关联请求上下文。
+	routerMgr.httpRouter.Use(otelmux.Middleware(Name))
 	registerHttpRoute("helloworld", http.MethodGet, "/helloworld", HelloWorld, routerMgr)
 }
 
@@ -79,9 +81,7 @@ func (s *Service) Type() string {
 func (s *Service) Init(conf *config.Config) error {
 	s.config = &Config{Endpoint: fmt.Sprintf("%s:%d", conf.ServerAddress, conf.ServerPort)}
 	s.Server = &http.Server{
-		// 增加 HTTP Server Instrument
-		// TODO 抽象成中间件
-		Handler:      otelhttp.NewHandler(Router(), "HTTP Server"),
+		Handler:      Router(),
 		ReadTimeout:  time.Minute * 5,
 		WriteTimeout: time.Minute * 5,
 	}
