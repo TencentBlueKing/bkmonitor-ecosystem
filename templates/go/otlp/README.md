@@ -109,14 +109,75 @@ func (s *Service) newResource() (*resource.Resource, error) {
 }
 ```
 
+### 2.4 使用 OpenTelemetry 组件埋点
+
+HTTP 和 gRPC 请求通常由框架组件创建协议层 Span。OpenTelemetry Go Contrib 提供中间件、Transport 和 StatsHandler，并负责上下文传播；业务操作仍可使用 `tracer.Start` 创建子 Span。
+
+#### 2.4.1 选择埋点组件
+
+优先使用 OpenTelemetry Go Contrib 提供的组件：
+
+| 使用场景 | Contrib 组件 | 接入方式 |
+| --- | --- | --- |
+| `net/http` 服务端、客户端 | <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp" target="_blank">otelhttp</a> | `http.Handler`、`http.RoundTripper` |
+| Gorilla Mux | <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux" target="_blank">otelmux</a> | `mux.MiddlewareFunc` |
+| Gin | <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin" target="_blank">otelgin</a> | `gin.HandlerFunc` |
+| gRPC 服务端、客户端 | <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc" target="_blank">otelgrpc</a> | `grpc.StatsHandler`、`grpc.WithStatsHandler` |
+
+OpenTelemetry Go Contrib 未覆盖目标框架时，再查看该框架的官方文档。自行实现埋点组件时，需要处理 Span 命名、语义属性和上下文传播。
+
+#### 2.4.2 Gorilla Mux 服务端与 HTTP 客户端示例
+
+本示例使用 `otelmux` 处理入站请求，使用 `otelhttp.Transport` 处理出站请求。两个组件的版本需要保持一致：
+
+```go
+require (
+	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.54.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0
+)
+```
+
+在路由器中注册 `otelmux` 中间件，HTTP 服务直接使用该路由器：
+
+```go
+router := mux.NewRouter()
+router.Use(otelmux.Middleware(""))
+router.HandleFunc("/helloworld", HelloWorld).Methods(http.MethodGet)
+
+server := &http.Server{
+	Handler: router,
+}
+```
+
+发送 HTTP 请求时，为客户端设置 `otelhttp` Transport：
+
+```go
+client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
+req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+if err != nil {
+	return err
+}
+
+res, err := client.Do(req)
+if err != nil {
+	return err
+}
+defer res.Body.Close()
+```
+
+`otelmux` 会将服务端 Span 写入 `req.Context()`。处理函数可通过 `trace.SpanFromContext(req.Context())` 获取该 Span，无需重复调用 `tracer.Start`。
+
+* <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux" target="_blank">Gorilla Mux instrumentation</a>
+* <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp" target="_blank">net/http instrumentation</a>
+
 ## 3. 使用场景
 
 示例项目整理常见的使用场景，集中在：
 
 ```go
 func HelloWorld(w http.ResponseWriter, req *http.Request) {
-	ctx, span := tracer.Start(req.Context(), "Handle/HelloWorld")
-	defer span.End()
+	ctx := req.Context()
+	span := trace.SpanFromContext(ctx)
 
 	// Logs（日志）
 	logsDemo(ctx, req)

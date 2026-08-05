@@ -161,8 +161,8 @@ func LoopQueryHelloWorld(ctx context.Context, url string) {
 
 // HelloWorld 处理 HTTP 请求并返回问候语
 func HelloWorld(w http.ResponseWriter, req *http.Request) {
-	ctx, span := tracer.Start(req.Context(), "Handle/HelloWorld")
-	defer span.End()
+	ctx := req.Context()
+	span := trace.SpanFromContext(ctx)
 
 	// Logs（日志）
 	logsDemo(ctx, req)

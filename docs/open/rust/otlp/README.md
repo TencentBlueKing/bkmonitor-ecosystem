@@ -166,7 +166,7 @@ let resource = Resource::builder()
 
 接入 Web 框架、HTTP 客户端、数据库或消息队列时，先在 <a href="https://github.com/open-telemetry/opentelemetry-rust-contrib" target="_blank">OpenTelemetry Rust Contrib</a> 和组件自身文档中查找 instrumentation。已有成熟组件时，优先使用组件完成协议层 Span、语义属性、指标和上下文传播；手动 Span 留给业务操作。
 
-#### 2.4.1 查找已有埋点组件
+#### 2.4.1 选择埋点组件
 
 OpenTelemetry Rust Contrib 中常用的 HTTP instrumentation：
 
