@@ -34,7 +34,7 @@ var routerMgr = &routerManager{httpRouter: mux.NewRouter(), httpRoutes: map[stri
 
 func init() {
 	// 使用路由模板作为 Span 名称，并自动关联请求上下文。
-	routerMgr.httpRouter.Use(otelmux.Middleware(Name))
+	routerMgr.httpRouter.Use(otelmux.Middleware(""))
 	registerHttpRoute("helloworld", http.MethodGet, "/helloworld", HelloWorld, routerMgr)
 }
 

@@ -141,7 +141,7 @@ require (
 
 ```go
 router := mux.NewRouter()
-router.Use(otelmux.Middleware(Name))
+router.Use(otelmux.Middleware(""))
 router.HandleFunc("/helloworld", HelloWorld).Methods(http.MethodGet)
 
 server := &http.Server{
@@ -159,6 +159,10 @@ if err != nil {
 }
 
 res, err := client.Do(req)
+if err != nil {
+	return err
+}
+defer res.Body.Close()
 ```
 
 `otelmux` 会将服务端 Span 写入 `req.Context()`。处理函数可通过 `trace.SpanFromContext(req.Context())` 获取该 Span，无需重复调用 `tracer.Start`。
