@@ -95,6 +95,61 @@ def _create_resource(self) -> Resource:
     return get_aggregated_resources(detectors, initial_resource)
 ```
 
+### 2.4 OpenTelemetry 组件埋点工具
+
+接入 Web 框架、HTTP 客户端、数据库或消息队列等，先在 <a href="https://github.com/open-telemetry/opentelemetry-python-contrib" target="_blank">OpenTelemetry Python Contrib</a> 和组件自身文档中查找 instrumentation。
+
+已有成熟组件时，优先使用组件完成协议层 Span、语义属性、指标和上下文传播；手动 Span 留给业务操作。
+
+#### 2.4.1 选择埋点组件
+
+OpenTelemetry Python Contrib 中常用的 instrumentation：
+
+| 库或框架 | 埋点组件 |
+| --- | --- |
+| Flask | <a href="https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation/opentelemetry-instrumentation-flask" target="_blank">opentelemetry-instrumentation-flask</a> |
+| Django | <a href="https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation/opentelemetry-instrumentation-django" target="_blank">opentelemetry-instrumentation-django</a> |
+| FastAPI | <a href="https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation/opentelemetry-instrumentation-fastapi" target="_blank">opentelemetry-instrumentation-fastapi</a> |
+| gRPC | <a href="https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation/opentelemetry-instrumentation-grpc" target="_blank">opentelemetry-instrumentation-grpc</a> |
+| SQLAlchemy | <a href="https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation/opentelemetry-instrumentation-sqlalchemy" target="_blank">opentelemetry-instrumentation-sqlalchemy</a> |
+
+如果 OpenTelemetry Python Contrib 中没有对应组件，再检查目标库的官方文档和社区中间件。只有在缺少成熟方案时，才自行实现协议层 Span、语义属性和上下文传播。
+
+#### 2.4.2 Flask 服务端与 Requests 客户端示例
+
+Flask 和 Requests 可以分别使用 OpenTelemetry Python Contrib 中的 `opentelemetry-instrumentation-flask` 和 `opentelemetry-instrumentation-requests`。在 `requirements.txt` 中引入依赖：
+
+```text
+opentelemetry-instrumentation-flask>=0.45b0
+opentelemetry-instrumentation-requests>=0.45b0
+```
+
+初始化 OpenTelemetry SDK 后，为 Flask 应用启用埋点：
+
+```python
+from flask import Flask
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+
+app = Flask(__name__)
+FlaskInstrumentor().instrument_app(app)
+```
+
+在发送 HTTP 请求前启用 Requests 埋点：
+
+```python
+import requests
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
+
+RequestsInstrumentor().instrument()
+response = requests.get("https://example.com", timeout=10)
+```
+
+`FlaskInstrumentor` 会为入站请求创建服务端 Span，`RequestsInstrumentor` 会为出站请求创建客户端 Span 并注入调用链上下文。Instrumentor 在进程中只需启用一次，无需在每个请求处理函数中重复调用。
+
+* <a href="{{ECOSYSTEM_CODE_ROOT_URL}}/examples/python-examples/helloworld/src/services/server.py" target="_blank">Flask 服务端埋点示例</a>
+* <a href="{{ECOSYSTEM_CODE_ROOT_URL}}/examples/python-examples/helloworld/src/services/querier.py" target="_blank">Requests 客户端埋点示例</a>
+* <a href="https://opentelemetry.io/docs/languages/python/libraries/" target="_blank">Using instrumentation libraries</a>
+
 ## 3. 使用场景
 
 示例项目整理常见的使用场景，集中在：
@@ -369,7 +424,7 @@ import logging
 otel_logger = logging.getLogger("otel")
 ```
 
-示例项目采取直接将 OpenTelemetry Protocol (OTLP) 格式的日志发送到目标 collector 的方式。
+示例项目采取直接将 OpenTelemetry Protocol（OTLP）格式的日志发送到目标 collector 的方式。
 
 ```python
 def _setup_logs(self, resource: Resource):
