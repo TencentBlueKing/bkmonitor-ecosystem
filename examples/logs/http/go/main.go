@@ -18,7 +18,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -34,16 +33,6 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
-// getEnvInt 从环境变量读取整数值，若无效则返回默认值
-func getEnvInt(key string, fallback int) int {
-	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			return n
-		}
-	}
-	return fallback
-}
-
 // ==================== 默认配置 ====================
 var (
 	// ❗❗【非常重要】认证令牌，用于接口鉴权，请替换为页面提供的日志数据源 Token。
@@ -52,9 +41,7 @@ var (
 	// 其他环境、跨云场景请根据页面接入指引填写
 	apiURL = getEnv("API_URL", "{{access_config.otlp.http_endpoint}}/v1/logs")
 	// 上报间隔（秒）
-	interval = getEnvInt("INTERVAL", 1)
-	// HTTP 请求超时时间（秒）
-	timeoutSec = getEnvInt("TIMEOUT_SEC", 10)
+	interval = 5
 )
 
 // ==================== 数据类型定义 ====================
@@ -157,11 +144,7 @@ func doPost(client *http.Client, payload map[string]interface{}) {
 	log.Printf("Sending log level: %s (%v)",
 		logRecord["severityText"], logRecord["severityNumber"])
 
-	jsonData, err := json.Marshal(payload)
-	if err != nil {
-		log.Printf("Failed to marshal payload: %v", err)
-		return
-	}
+	jsonData, _ := json.Marshal(payload)
 	req, err := http.NewRequest("POST", apiURL,
 		bytes.NewBuffer(jsonData))
 	if err != nil {
@@ -184,7 +167,7 @@ func doPost(client *http.Client, payload map[string]interface{}) {
 
 // ==================== 主函数 ====================
 func main() {
-	client := &http.Client{Timeout: time.Duration(timeoutSec) * time.Second}
+	client := &http.Client{Timeout: 10 * time.Second}
 	log.Println("Starting log reporter (press Ctrl+C to stop)...")
 
 	// 捕获 SIGINT（Ctrl+C）和 SIGTERM 实现优雅退出
