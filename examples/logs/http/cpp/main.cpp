@@ -6,17 +6,21 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-#include <atomic>
-#include <chrono>
+// C 系统文件
 #include <csignal>
 #include <cstdlib>
 #include <ctime>
+
+// C++ 系统文件
+#include <atomic>
+#include <chrono>
 #include <iostream>
 #include <random>
 #include <string>
 #include <thread>
 #include <vector>
 
+// 其他库文件
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
@@ -158,6 +162,7 @@ void do_post(const json& payload) {
     if (rc != CURLE_OK) {
         log_error(std::string("failed to post request: ") + curl_easy_strerror(rc));
     } else {
+        // curl API 要求 CURLINFO_RESPONSE_CODE 必须传 long*，故此处保留 long 而非改用 int64_t
         long code;
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
         log_info("response.status_code=" + std::to_string(code) + ", body=" + resp);
