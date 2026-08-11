@@ -176,7 +176,7 @@ func buildPayload() map[string]interface{} {
 				"scopeLogs": []interface{}{
 					map[string]interface{}{
 						"scope": map[string]interface{}{
-							"name": "java-http-demo",
+							"name": "go-http-demo",
 						},
 						"logRecords": []interface{}{
 							map[string]interface{}{
