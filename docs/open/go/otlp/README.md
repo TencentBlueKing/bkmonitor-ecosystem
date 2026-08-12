@@ -186,7 +186,7 @@ func (s *Service) newResource() (*resource.Resource, error) {
 
 #### 2.4.1 选择埋点组件
 
-Go 生态中常用的 instrumentation：
+OpenTelemetry Go 生态中常用的 instrumentation：
 
 | 使用场景 | Contrib 组件 |
 | --- | --- |
