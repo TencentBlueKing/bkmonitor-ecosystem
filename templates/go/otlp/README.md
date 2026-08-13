@@ -111,13 +111,13 @@ func (s *Service) newResource() (*resource.Resource, error) {
 
 ### 2.4 OpenTelemetry 组件埋点工具
 
-接入 Web 框架、HTTP 客户端、数据库或消息队列等，先在 <a href="https://github.com/open-telemetry/opentelemetry-go-contrib" target="_blank">OpenTelemetry Go Contrib</a> 和组件自身文档中查找 instrumentation。
+为 Web 框架、HTTP & 数据库 & 消息队列客户端等应用依赖接入 OpenTelemetry 时，可以先在 <a href="https://github.com/open-telemetry/opentelemetry-go-contrib" target="_blank">OpenTelemetry Go Contrib</a> 优先查找适用的插桩库（Instrumentation Library）。
 
-已有成熟组件时，优先使用组件完成协议层 Span、语义属性、指标和上下文传播；手动 Span 留给业务操作。
+已有成熟插桩库时，优先使用其自动插桩能力；对于插桩库无法覆盖的业务操作，参考下方文档按需手动创建 Span。
 
 #### 2.4.1 选择埋点组件
 
-OpenTelemetry Go 生态中常用的 instrumentation：
+<a href="https://github.com/open-telemetry/opentelemetry-go-contrib" target="_blank">OpenTelemetry Go Contrib</a> 中常用的插桩库有 👇：
 
 | 使用场景 | Contrib 组件 |
 | --- | --- |
