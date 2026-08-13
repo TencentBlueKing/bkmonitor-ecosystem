@@ -109,26 +109,28 @@ func (s *Service) newResource() (*resource.Resource, error) {
 }
 ```
 
-### 2.4 使用 OpenTelemetry 组件埋点
+### 2.4 OpenTelemetry 组件埋点工具
 
-HTTP 和 gRPC 请求通常由框架组件创建协议层 Span。OpenTelemetry Go Contrib 提供中间件、Transport 和 StatsHandler，并负责上下文传播；业务操作仍可使用 `tracer.Start` 创建子 Span。
+为 Web 框架、HTTP & 数据库 & 消息队列客户端等应用依赖接入 OpenTelemetry 时，可以先在 <a href="https://github.com/open-telemetry/opentelemetry-go-contrib" target="_blank">OpenTelemetry Go Contrib</a> 优先查找适用的插桩库（Instrumentation Library）。
+
+已有成熟插桩库时，优先使用其自动插桩能力；对于插桩库无法覆盖的业务操作，参考下方文档按需手动创建 Span。
 
 #### 2.4.1 选择埋点组件
 
-优先使用 OpenTelemetry Go Contrib 提供的组件：
+<a href="https://github.com/open-telemetry/opentelemetry-go-contrib" target="_blank">OpenTelemetry Go Contrib</a> 中常用的插桩库有 👇：
 
-| 使用场景 | Contrib 组件 | 接入方式 |
-| --- | --- | --- |
-| `net/http` 服务端、客户端 | <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp" target="_blank">otelhttp</a> | `http.Handler`、`http.RoundTripper` |
-| Gorilla Mux | <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux" target="_blank">otelmux</a> | `mux.MiddlewareFunc` |
-| Gin | <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin" target="_blank">otelgin</a> | `gin.HandlerFunc` |
-| gRPC 服务端、客户端 | <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc" target="_blank">otelgrpc</a> | `grpc.StatsHandler`、`grpc.WithStatsHandler` |
+| 使用场景 | Contrib 组件 |
+| --- | --- |
+| `net/http` 服务端、客户端 | <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp" target="_blank">otelhttp</a> |
+| Gorilla Mux | <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux" target="_blank">otelmux</a> |
+| Gin | <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin" target="_blank">otelgin</a> |
+| gRPC 服务端、客户端 | <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc" target="_blank">otelgrpc</a> |
 
-OpenTelemetry Go Contrib 未覆盖目标框架时，再查看该框架的官方文档。自行实现埋点组件时，需要处理 Span 命名、语义属性和上下文传播。
+如果 Contrib 中没有对应组件，再检查目标库的官方文档和社区中间件。只有在缺少成熟方案时，才自行实现协议层 Span、语义属性和上下文传播。
 
 #### 2.4.2 Gorilla Mux 服务端与 HTTP 客户端示例
 
-本示例使用 `otelmux` 处理入站请求，使用 `otelhttp.Transport` 处理出站请求。两个组件的版本需要保持一致：
+示例项目使用 `otelmux` 为 Gorilla Mux 路由自动创建服务端 HTTP Span，并使用 `otelhttp` 为出站 HTTP 请求自动创建客户端 Span。两个组件的版本需要保持一致：
 
 ```go
 require (
@@ -141,7 +143,7 @@ require (
 
 ```go
 router := mux.NewRouter()
-router.Use(otelmux.Middleware(""))
+router.Use(otelmux.Middleware(Name))
 router.HandleFunc("/helloworld", HelloWorld).Methods(http.MethodGet)
 
 server := &http.Server{
@@ -165,7 +167,7 @@ if err != nil {
 defer res.Body.Close()
 ```
 
-`otelmux` 会将服务端 Span 写入 `req.Context()`。处理函数可通过 `trace.SpanFromContext(req.Context())` 获取该 Span，无需重复调用 `tracer.Start`。
+请求处理函数可直接从 `req.Context()` 获取组件创建的 Span；例如记录异常时使用 `trace.SpanFromContext(ctx)`，无需为 HTTP 请求额外创建手动 Span。
 
 * <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux" target="_blank">Gorilla Mux instrumentation</a>
 * <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp" target="_blank">net/http instrumentation</a>

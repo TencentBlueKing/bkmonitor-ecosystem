@@ -164,16 +164,20 @@ let resource = Resource::builder()
 
 ### 2.4 OpenTelemetry 组件埋点工具
 
-接入 Web 框架、HTTP 客户端、数据库或消息队列时，先在 <a href="https://github.com/open-telemetry/opentelemetry-rust-contrib" target="_blank">OpenTelemetry Rust Contrib</a> 和组件自身文档中查找 instrumentation。已有成熟组件时，优先使用组件完成协议层 Span、语义属性、指标和上下文传播；手动 Span 留给业务操作。
+为 Web 框架、HTTP & 数据库 & 消息队列客户端等应用依赖接入 OpenTelemetry 时，可以先在 <a href="https://github.com/open-telemetry/opentelemetry-rust-contrib" target="_blank">OpenTelemetry Rust Contrib</a> 优先查找适用的插桩库（Instrumentation Library）。
+
+已有成熟插桩库时，优先使用其自动插桩能力；对于插桩库无法覆盖的业务操作，参考下方文档按需手动创建 Span。
 
 #### 2.4.1 选择埋点组件
 
-OpenTelemetry Rust Contrib 中常用的 HTTP instrumentation：
+<a href="https://github.com/open-telemetry/opentelemetry-rust-contrib" target="_blank">OpenTelemetry Rust Contrib</a> 中常用的插桩库有 👇：
 
-| 库或框架 | Contrib 组件 |
+| 库或框架 | 埋点组件 |
 | --- | --- |
 | Actix Web | <a href="https://github.com/open-telemetry/opentelemetry-rust-contrib/tree/main/opentelemetry-instrumentation-actix-web" target="_blank">opentelemetry-instrumentation-actix-web</a> |
-| Tower、Axum、Hyper、Tonic | <a href="https://github.com/open-telemetry/opentelemetry-rust-contrib/tree/main/opentelemetry-instrumentation-tower" target="_blank">opentelemetry-instrumentation-tower</a> |
+| Tower、Axum、Hyper | <a href="https://github.com/open-telemetry/opentelemetry-rust-contrib/tree/main/opentelemetry-instrumentation-tower" target="_blank">opentelemetry-instrumentation-tower</a> |
+| Tonic（gRPC） | <a href="https://github.com/open-telemetry/opentelemetry-rust-contrib/tree/main/opentelemetry-instrumentation-tower" target="_blank">opentelemetry-instrumentation-tower</a> |
+| SQLx | <a href="https://docs.rs/sqlx-tracing/latest/sqlx_tracing/" target="_blank">sqlx-tracing</a> |
 
 如果 Contrib 中没有对应组件，再检查目标库的官方文档和社区中间件。只有在缺少成熟方案时，才自行实现协议层 Span、语义属性和上下文传播。
 

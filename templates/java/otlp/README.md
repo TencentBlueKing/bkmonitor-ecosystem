@@ -86,6 +86,45 @@ private Resource getResource() {
 }
 ```
 
+### 2.4 OpenTelemetry 组件埋点工具
+
+为 Web 框架、HTTP & 数据库 & 消息队列客户端等应用依赖接入 OpenTelemetry 时，可以先在 <a href="https://github.com/open-telemetry/opentelemetry-java-contrib" target="_blank">OpenTelemetry Java Instrumentation</a> 优先查找适用的插桩库（Instrumentation Library）。
+
+已有成熟插桩库时，优先使用其自动插桩能力；对于插桩库无法覆盖的业务操作，参考下方文档按需手动创建 Span。
+
+#### 2.4.1 选择埋点组件
+
+ <a href="https://github.com/open-telemetry/opentelemetry-java-instrumentation/blob/v2.8.0/docs/supported-libraries.md" target="_blank">OpenTelemetry Java Instrumentation</a> 中常用的插桩库有 👇：
+
+| 库或框架 | 埋点组件 |
+| --- | --- |
+| `HttpClient`（Java 11+） | <a href="https://github.com/open-telemetry/opentelemetry-java-instrumentation/tree/v2.8.0/instrumentation/java-http-client/library" target="_blank">opentelemetry-java-http-client</a> |
+| Apache HttpClient 5.2+ | <a href="https://github.com/open-telemetry/opentelemetry-java-instrumentation/tree/v2.8.0/instrumentation/apache-httpclient/apache-httpclient-5.2/library" target="_blank">opentelemetry-apache-httpclient-5.2</a> |
+| gRPC 1.6+ | <a href="https://github.com/open-telemetry/opentelemetry-java-instrumentation/tree/v2.8.0/instrumentation/grpc-1.6/library" target="_blank">opentelemetry-grpc-1.6</a> |
+| JDBC | <a href="https://github.com/open-telemetry/opentelemetry-java-instrumentation/tree/v2.8.0/instrumentation/jdbc/library" target="_blank">opentelemetry-jdbc</a> |
+
+如果 OpenTelemetry Java Instrumentation 中没有对应组件，再检查目标库的官方文档和社区中间件。只有在缺少成熟方案时，才自行实现协议层 Span、语义属性和上下文传播。
+
+#### 2.4.2 Java HTTP Client 示例
+
+本示例使用 `opentelemetry-java-http-client` 处理出站请求。相关依赖见 <a href="{{ECOSYSTEM_CODE_ROOT_URL}}/examples/java-examples/helloworld/build.gradle" target="_blank">build.gradle</a>：
+
+```groovy
+implementation("io.opentelemetry.instrumentation:opentelemetry-java-http-client:2.8.0-alpha")
+```
+
+通过 `JavaHttpClientTelemetry` 包装 `HttpClient`，该客户端发送请求时会创建客户端 Span：
+
+```java
+this.httpClient = JavaHttpClientTelemetry.builder(GlobalOpenTelemetry.get())
+        .build()
+        .newHttpClient(HttpClient.newBuilder().build());
+```
+
+`JavaHttpClientTelemetry` 从全局 SDK 获取实例，需要在 SDK 完成注册后再包装客户端，否则不会产生 Span。
+
+* <a href="https://github.com/open-telemetry/opentelemetry-java-instrumentation/tree/v2.8.0/instrumentation/java-http-client/library" target="_blank">Java HTTP Client instrumentation</a>
+
 ## 3. 使用场景
 
 示例项目整理常见的使用场景，集中在：
