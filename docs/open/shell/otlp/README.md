@@ -66,6 +66,7 @@ REPORT_DATA=$(cat <<EOF
   "resourceSpans": [
     {
       "resource": {
+        # service.name 必填，其他两个可选。attributes 下可自定义 kv。
         "attributes": [
           { "key": "service.name", "value": { "stringValue": "${SERVICE_NAME}" } },
           { "key": "service.version", "value": { "stringValue": "1.0.0" } },
@@ -87,6 +88,7 @@ REPORT_DATA=$(cat <<EOF
               "kind": 2,
               "startTimeUnixNano": "${START_TIME_UNIX_NANO}",
               "endTimeUnixNano": "${END_TIME_UNIX_NANO}",
+              # attributes 下 kv 可自定义。
               "attributes": [
                 { "key": "http.request.method", "value": { "stringValue": "POST" } },
                 { "key": "url.scheme", "value": { "stringValue": "https" } },
