@@ -232,13 +232,13 @@ Resources 描述“谁产生日志”，Attributes 描述“这条日志发生�
 
 另一种方式是通过 SDK 上报自定义日志：
 
-* 了解 <a href="{{docs.logs.learn.sdk_python}}" target="_blank">Python-日志（SDK）上报</a>。
+* 了解 <a href="{{docs.logs.learn.sdk_python}}" target="_blank">Python-日志（OpenTelemetry SDK）上报</a>。
 
-* 了解 <a href="{{docs.logs.learn.sdk_c}}" target="_blank">C++-日志（SDK）上报</a>。
+* 了解 <a href="{{docs.logs.learn.sdk_c}}" target="_blank">C++-日志（OpenTelemetry SDK）上报</a>。
 
-* 了解 <a href="{{docs.logs.learn.sdk_java}}" target="_blank">Java-日志（SDK）上报</a>。
+* 了解 <a href="{{docs.logs.learn.sdk_java}}" target="_blank">Java-日志（OpenTelemetry SDK）上报</a>。
 
-* 了解 <a href="{{docs.logs.learn.sdk_go}}" target="_blank">Go-日志（SDK）上报</a>。
+* 了解 <a href="{{docs.logs.learn.sdk_go}}" target="_blank">Go-日志（OpenTelemetry SDK）上报</a>。
 
 ### 3.2 查看数据
 
