@@ -1,0 +1,19 @@
+{
+  "name": "profiling",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "description": "Node.js Pyroscope profiling demo for BlueKing APM",
+  "engines": {
+    "node": ">=20.20.2"
+  },
+  "dependencies": {
+    "@pyroscope/nodejs": "0.6.3",
+    "express": "^4.19.2"
+  }
+}
