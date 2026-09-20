@@ -227,6 +227,25 @@ let _entered = span.enter();
 tracing::info!("custom span work completed");
 ```
 
+**设置 Span Kind**
+
+Span Kind 用于说明 Span 在调用关系中的角色。创建 Span 时，可根据操作类型指定 Kind：
+
+| Kind | 适用场景                                                                          |
+| --- |-------------------------------------------------------------------------------|
+| `SERVER` | 处理外部发来的请求                                                                     |
+| `CLIENT` | 向外部服务发起请求                                                                     |
+| `PRODUCER` | 发起或调度异步操作，例如发送消息                                                              |
+| `CONSUMER` | 处理异步操作，例如消费消息                                                                 |
+| `INTERNAL` | 应用内部操作；未指定 Kind 时的默认值；此类 Span 不会纳入 APM 调用统计，如果服务仅上报此类型，概览页面的请求量、耗时、失败率图表将无数据。 |
+
+在 Rust 的 `tracing-opentelemetry` 中，通过 `otel.kind` 字段指定 Kind。例如，表示一次向外部服务发起的请求：
+
+```rust
+let span = tracing::info_span!("ClientDemo/request", otel.kind = "client"); // kind 是特殊字段，不能通过 `set_attribute("span.kind", ...)` 来设置。
+let _entered = span.enter();
+```
+
 进入 Span 后，在当前作用域内产生的子 Span 和日志会自动继承上下文，示例代码如下：
 
 ```rust
@@ -239,7 +258,8 @@ pub fn traces_custom_span_demo() {
 }
 ```
 
-* <a href="https://docs.rs/tracing/0.1.41/tracing/macro.info_span.html" target="_blank">Creating Spans</a>
+- <a href="https://docs.rs/tracing/0.1.41/tracing/macro.info_span.html" target="_blank">Creating Spans</a>
+- <a href="https://opentelemetry.io/docs/specs/otel/trace/api/#spankind" target="_blank">OpenTelemetry SpanKind 规范</a>
 
 #### 3.1.3 设置属性
 
