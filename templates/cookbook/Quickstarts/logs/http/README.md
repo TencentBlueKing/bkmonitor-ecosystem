@@ -65,47 +65,32 @@ OTLP/HTTP 日志上报使用 HTTP POST 请求。默认日志上报路径为 `/v1
 | --- | --- | --- | --- |
 | `resource` | `Resource` | 否 | 产生日志的实体，例如服务、容器、Pod 或进程。 |
 | `scopeLogs` | `array<ScopeLog>` | 是 | 按 instrumentation scope 分组的日志集合。 |
-| `schemaUrl` | `string` | 否 | `resource` 使用的 schema 地址。 |
 
 `Resource`：
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `attributes` | `array<KeyValue>` | 否 | 资源属性，例如服务名、环境、Pod 名称。 |
-| `droppedAttributesCount` | `integer` | 否 | 被丢弃的资源属性数量，通常不用主动设置。 |
 
 `ScopeLog`：
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| `scope` | `InstrumentationScope` | 否 | 产生日志的库、模块或 logger 信息。 |
 | `logRecords` | `array<LogRecord>` | 是 | 实际日志记录列表。 |
-| `schemaUrl` | `string` | 否 | `scope` 和 `logRecords` 使用的 schema 地址。 |
-
-`InstrumentationScope`：
-
-| 字段 | 类型 | 必填 | 说明 |
-| --- | --- | --- | --- |
-| `name` | `string` | 否 | 产生日志的库、模块或 logger 名称。 |
-| `version` | `string` | 否 | 产生日志的库、模块或 logger 版本。 |
-| `attributes` | `array<KeyValue>` | 否 | scope 级别的附加属性。 |
-| `droppedAttributesCount` | `integer` | 否 | 被丢弃的 scope 属性数量。 |
 
 `LogRecord`：
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `timeUnixNano` | `string` | 否 | 日志发生时间，Unix 纳秒时间戳。OTLP JSON 中 `fixed64` 使用字符串表达。 |
-| `observedTimeUnixNano` | `string` | 否 | 日志被采集系统观测到的时间。 |
+| `observedTimeUnixNano` | `string` | 否 | 观测时间，Unix 纳秒时间戳。仅在 `timeUnixNano` 未提供或为 `0` 时作为日志时间。 |
 | `severityNumber` | `integer` | 否 | 标准化日志级别数值。 |
 | `severityText` | `string` | 否 | 原始日志级别文本，例如 `INFO`、`WARN`、`ERROR`。 |
-| `body` | `AnyValue` | 否 | 日志正文，可以是字符串或结构化对象。 |
+| `body` | `AnyValue` | 否 | 日志正文，以字符串形式存储。对象和数组转换为 JSON 字符串。 |
 | `attributes` | `array<KeyValue>` | 否 | 当前日志事件的附加属性。 |
-| `droppedAttributesCount` | `integer` | 否 | 被丢弃的日志属性数量。 |
 | `flags` | `integer` | 否 | Trace flags。低 `8` 位对应 W3C Trace Context flags。 |
 | `traceId` | `string` | 否 | Trace ID，OTLP JSON 中使用十六进制字符串。 |
 | `spanId` | `string` | 否 | Span ID，OTLP JSON 中使用十六进制字符串。 |
-| `eventName` | `string` | 否 | 事件类型名称，适合结构化事件日志。 |
 
 `KeyValue`：
 
@@ -148,7 +133,6 @@ REPORT_DATA=$(cat <<EOF
       },
       "scopeLogs": [
         {
-          "scope": { "name": "curl-demo" },
           "logRecords": [
             {
               "timeUnixNano": "${TIME_UNIX_NANO}",
