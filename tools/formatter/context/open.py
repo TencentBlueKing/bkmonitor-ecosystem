@@ -489,6 +489,7 @@ class DocsAccessConfig(metaclass=base.FieldMeta):
                     }
                 },
                 "learn": {
+                    "sdk_logs_report": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/sdks/README.md",
                     "sdk_python": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/sdks/python.md",
                     "sdk_c": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/sdks/cpp.md",
                     "sdk_java": "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/sdks/java.md",
