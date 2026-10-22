@@ -33,6 +33,13 @@ class EcosystemCodeRootUrl(metaclass=base.FieldMeta):
         value = "https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master"
 
 
+class ReferApmDataAccessUrl(metaclass=base.FieldMeta):
+    class Meta:
+        name = "REFER_APM_DATA_ACCESS_URL"
+        scope = base.ScopeType.OPEN.value
+        value = "https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/docs/open"
+
+
 class ReferPythonOtlpUrl(metaclass=base.FieldMeta):
     class Meta:
         name = "REFER_PYTHON_OTLP_URL"

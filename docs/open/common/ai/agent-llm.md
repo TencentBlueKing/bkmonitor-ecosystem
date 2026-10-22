@@ -6,9 +6,7 @@ Agent、模型调用和工具执行分别使用独立的 OpenTelemetry Span，�
 
 ### 接入准备
 
-应用创建、OTLP 地址、Token 和 Resource 配置可参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/python/otlp/README.md" target="_blank">Python 接入文档</a> 或 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/java/otlp/README.md" target="_blank">Java 接入文档</a>。完成基础上报后，在对应 Span 上设置下文的 GenAI 属性。
-
-同一会话使用框架或应用已有的 `gen_ai.conversation.id`，没有会话 ID 时省略。Agent ID 标识稳定的 Agent 配置，与会话 ID 分开填写。
+应用创建、OTLP 地址、Token 和 Resource 配置可参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/docs/open" target="_blank">应用性能监控（APM）数据接入</a>。完成基础上报后，在对应 Span 上设置下文的 GenAI 属性。
 
 ### Span 示例
 
@@ -124,6 +122,8 @@ Agent 根 Span 的输入和输出来自应用入口与出口，不以任意子�
 
 **步骤与会话**
 
+同一会话使用框架或应用已有的 `gen_ai.conversation.id`，没有会话 ID 时省略。
+
 | 字段 | 说明 | 示例 |
 | --- | --- | --- |
 | `gen_ai.operation.name` | 步骤类型，如 Agent 调用、模型调用、工具执行。 | `"chat"` |
@@ -131,6 +131,8 @@ Agent 根 Span 的输入和输出来自应用入口与出口，不以任意子�
 | `gen_ai.provider.name` | 模型服务商。 | `"openai"` |
 
 **Agent 身份**
+
+Agent ID 标识稳定的 Agent 配置，与会话 ID 分开填写。
 
 | 字段 | 说明 | 示例 |
 | --- | --- | --- |
