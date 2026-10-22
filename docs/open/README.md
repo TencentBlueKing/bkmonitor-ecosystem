@@ -31,3 +31,7 @@
 |            | <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/js/profiling/README.md" target="_blank">JavaScript-Profiling（Pyroscope SDK）接入</a>                     | `Profiling（性能分析）`                                                       | <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/js-examples/profiling" target="_blank">js-profiling</a>                     |
 | Rust       | <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/rust/otlp/README.md" target="_blank">Rust（OpenTelemetry SDK）接入</a>                                  | `Traces（调用链）`<br />`Logs（日志）`<br />`Metrics（指标）`                        | <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/rust-examples/helloworld" target="_blank">rust-helloworld</a>               |
 | 通用         | <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/shell/otlp/README.md" target="_blank">调用链（HTTP）上报</a>                                               | `Traces（调用链）`                                                           |                                                                                                                                                                  |
+
+## Agent 与 LLM
+
+<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/ai/agent-llm.md" target="_blank">Agent 与 LLM 通用接入及核心字段</a>：通过 OpenTelemetry 上报 Agent、模型和工具调用，查阅核心字段与完整字段说明。

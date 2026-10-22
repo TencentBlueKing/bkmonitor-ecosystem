@@ -35,6 +35,7 @@ repos:
         name: make lint 命令调用
         entry: make lint
         language: system
+        files: \.go$
         require_serial: true
 
       - id: make-render

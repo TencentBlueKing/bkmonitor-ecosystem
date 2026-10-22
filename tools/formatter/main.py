@@ -43,7 +43,7 @@ class DocsConfig:
 
 def convert_markdown_links_to_html(file_path: str):
     with open(file_path, "r", encoding="utf-8") as f:
-        link_pattern = re.compile(r"(?<!!)\[(.+?)]\(([^\s*]*?)\)")
+        link_pattern = re.compile(r"(?<!!)\[([^\[\]\n]+)]\(([^\s*]*?)\)")
         content: str = link_pattern.sub(r'<a href="\2" target="_blank">\1</a>', f.read())
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(content)
