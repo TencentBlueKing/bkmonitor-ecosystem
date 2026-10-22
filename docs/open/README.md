@@ -34,4 +34,4 @@
 
 ## Agent 与 LLM
 
-<a href="common/ai/agent-llm.md" target="_blank">Agent 与 LLM 通用接入及核心字段</a>：通过 OpenTelemetry 上报 Agent、模型和工具调用，查阅核心字段与完整字段说明。
+<a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/ai/agent-llm.md" target="_blank">Agent 与 LLM 通用接入及核心字段</a>：通过 OpenTelemetry 上报 Agent、模型和工具调用，查阅核心字段与完整字段说明。

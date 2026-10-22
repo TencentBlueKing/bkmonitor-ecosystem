@@ -1,23 +1,156 @@
-# LLM 核心字段
+# Agent 与 LLM 通用接入及核心字段
 
 ## 0x00 Agent 与 LLM 通用接入
 
-Agent、LLM 应用可通过 OpenTelemetry 上报调用链。在 Agent 调用、模型调用和工具执行的 Span 上按下表设置属性，即可接入蓝鲸 Agent 与 LLM 观测。
+Agent、模型调用和工具执行分别使用独立的 OpenTelemetry Span，上报到蓝鲸 Agent 与 LLM 观测。`gen_ai.operation.name` 标识步骤类型，Span 父子关系串联执行过程。
 
-应用创建、OTLP 地址及 Token 配置见<a href="../../README.md" target="_blank">各语言接入文档</a>，也可参考<a href="../../shell/otlp/README.md" target="_blank">调用链 HTTP 上报</a>。
+### 接入准备
 
-每个步骤使用独立的 Span，并通过父子关系串联调用过程。`gen_ai.operation.name` 使用 `invoke_agent`、`chat`、`execute_tool` 等实际操作名称。
+应用创建、OTLP 地址、Token 和 Resource 配置可参考 <a href="{{REFER_PYTHON_OTLP_URL}}" target="_blank">Python 接入文档</a> 或 <a href="{{REFER_JAVA_OTLP_URL}}" target="_blank">Java 接入文档</a>。完成基础上报后，在对应 Span 上设置下文的 GenAI 属性。
 
-同一会话的步骤使用相同的真实 `gen_ai.conversation.id`，没有会话 ID 时省略。
+同一会话使用框架或应用已有的 `gen_ai.conversation.id`，没有会话 ID 时省略。Agent ID 标识稳定的 Agent 配置，与会话 ID 分开填写。
+
+### Span 示例
+
+以“计算 1 + 2”为例，Agent 调用模型选择 `add` 工具，工具返回结果后，模型生成最终回答。以下保留三类 Span 的核心字段，省略时间戳、Resource 和首轮模型 Span。
+
+```text
+invoke_agent Calculator
+├── chat gpt-4o          选择 add 工具（示例省略）
+├── execute_tool add     执行加法
+└── chat gpt-4o          接收工具结果，生成回答
+```
+
+**Agent：记录本轮请求与最终回答**
+
+Agent 根 Span 的输入和输出来自应用入口与出口，不以任意子模型的消息代替。
+
+```json
+{
+  "span_id": "1111111111111111",
+  "parent_span_id": "",
+  "span_name": "invoke_agent Calculator",
+  "attributes": {
+    "gen_ai.operation.name": "invoke_agent",
+    "gen_ai.conversation.id": "conv-1",
+    "gen_ai.agent.id": "calculator",
+    "gen_ai.agent.name": "Calculator",
+    "gen_ai.input.messages": [
+      {"role": "user", "parts": [{"type": "text", "content": "计算 1 + 2"}]}
+    ],
+    "gen_ai.output.messages": [
+      {"role": "assistant", "parts": [{"type": "text", "content": "1 + 2 = 3"}]}
+    ]
+  }
+}
+```
+
+参考：<a href="https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-agent-spans.md" target="_blank">GenAI agent spans</a>。
+
+**工具：记录一次执行的参数与结果**
+
+`gen_ai.tool.call.id` 使用模型返回的调用 ID，将工具执行与消息中的工具请求、返回关联起来。
+
+```json
+{
+  "span_id": "2222222222222222",
+  "parent_span_id": "1111111111111111",
+  "span_name": "execute_tool add",
+  "attributes": {
+    "gen_ai.operation.name": "execute_tool",
+    "gen_ai.conversation.id": "conv-1",
+    "gen_ai.tool.name": "add",
+    "gen_ai.tool.type": "function",
+    "gen_ai.tool.call.id": "call-1",
+    "gen_ai.tool.call.arguments": "{\"a\":1,\"b\":2}",
+    "gen_ai.tool.call.result": "{\"sum\":3}"
+  }
+}
+```
+
+参考：<a href="https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-spans.md" target="_blank">GenAI inference and tool spans</a>。
+
+**模型：保留消息顺序与本轮 Token 用量**
+
+此 Span 对应工具执行后的模型调用，输入包含用户问题、首轮工具请求和工具结果。示例假定提供商返回 `stop` 和 Token 用量，实际采集时按原响应填写。
+
+```json
+{
+  "span_id": "3333333333333333",
+  "parent_span_id": "1111111111111111",
+  "span_name": "chat gpt-4o",
+  "attributes": {
+    "gen_ai.operation.name": "chat",
+    "gen_ai.conversation.id": "conv-1",
+    "gen_ai.provider.name": "openai",
+    "gen_ai.request.model": "gpt-4o",
+    "gen_ai.input.messages": [
+      {"role": "user", "parts": [{"type": "text", "content": "计算 1 + 2"}]},
+      {
+        "role": "assistant",
+        "parts": [
+          {"type": "tool_call", "id": "call-1", "name": "add", "arguments": {"a": 1, "b": 2}}
+        ]
+      },
+      {
+        "role": "tool",
+        "parts": [
+          {"type": "tool_call_response", "id": "call-1", "response": {"sum": 3}}
+        ]
+      }
+    ],
+    "gen_ai.output.messages": [
+      {
+        "role": "assistant",
+        "parts": [{"type": "text", "content": "1 + 2 = 3"}],
+        "finish_reason": "stop"
+      }
+    ],
+    "gen_ai.usage.input_tokens": 100,
+    "gen_ai.usage.output_tokens": 20
+  }
+}
+```
+
+参考：<a href="https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-spans.md" target="_blank">GenAI inference spans</a>。
+
+- *[1] 三类 Span 属于同一条 Trace，共用同一个 TraceID，示例中的 ID 和业务内容上报时需替换为实际采集值。*
+- *[2] 消息、系统指令和工具定义为便于阅读展开为 JSON 数组，工具 Span 的参数与结果展示为 JSON 字符串。*
+- *[3] SDK 不支持结构化属性时，将整个数组或对象序列化为 JSON 字符串后设置到对应属性。*
 
 ### 核心字段速查
 
-下表的「示例」使用 JSON 值表达字段结构。消息、系统指令和工具参数等结构化字段按示例组织，SDK 不支持对象属性时，将整个数组或对象序列化为 JSON 字符串后设置到对应属性。
+按步骤填写实际采集到的字段。下表以 JSON 值展示字段结构，类型、枚举和消息 Part 的详细规则见 `0x01 标准字段参考`。
+
+**步骤与会话**
 
 | 字段 | 说明 | 示例 |
 | --- | --- | --- |
 | `gen_ai.operation.name` | 步骤类型，如 Agent 调用、模型调用、工具执行。 | `"chat"` |
+| `gen_ai.conversation.id` | 框架或应用已有的真实会话标识。 | `"conv-1"` |
 | `gen_ai.provider.name` | 模型服务商。 | `"openai"` |
+
+**Agent 身份**
+
+| 字段 | 说明 | 示例 |
+| --- | --- | --- |
+| `gen_ai.agent.id` | Agent 稳定标识。 | `"agent-1"` |
+| `gen_ai.agent.name` | Agent 展示名称。 | `"Assistant"` |
+| `gen_ai.agent.description` | Agent 用途说明。 | `"问答助手"` |
+| `gen_ai.agent.version` | Agent 版本。 | `"1.0.0"` |
+
+**消息与系统指令**
+
+| 字段 | 说明 | 示例 |
+| --- | --- | --- |
+| `gen_ai.input.messages` | 按顺序记录输入消息，保留 role 和 parts 结构。 | `[{"role":"user","parts":[{"type":"text","content":"你好"}]}]` |
+| `gen_ai.output.messages` | 输出消息，停止原因有原值时填写。 | `[{"role":"assistant","parts":[{"type":"text","content":"好"}]}]` |
+| `gen_ai.system_instructions` | 与聊天历史分开传递的系统指令。 | `[{"type":"text","content":"你是助手"}]` |
+
+**模型请求与响应**
+
+| 字段 | 说明 | 示例 |
+| --- | --- | --- |
 | `gen_ai.request.model` | 请求指定的模型名称。 | `"gpt-4o"` |
 | `gen_ai.request.temperature` | 请求的温度参数。 | `0.7` |
 | `gen_ai.request.stream` | 是否为流式请求。 | `true` |
@@ -27,36 +160,40 @@ Agent、LLM 应用可通过 OpenTelemetry 上报调用链。在 Agent 调用、�
 | `gen_ai.response.status` | 提供商明确返回的响应生命周期状态。 | `"completed"` |
 | `gen_ai.response.finish_reasons` | 提供商明确返回的停止原因列表。 | `["stop"]` |
 | `gen_ai.response.time_to_first_chunk` | 流式请求收到首个 chunk 的延迟，单位为秒。 | `0.35` |
-| `gen_ai.input.messages` | 按顺序记录输入消息，保留 role 和 parts 结构。 | `[{"role":"user","parts":[{"type":"text","content":"你好"}]}]` |
-| `gen_ai.system_instructions` | 与聊天历史分开传递的系统指令。 | `[{"type":"text","content":"你是助手"}]` |
-| `gen_ai.output.messages` | 输出消息，停止原因有原值时填写。 | `[{"role":"assistant","parts":[{"type":"text","content":"好"}]}]` |
-| `gen_ai.tool.definitions` | 可用工具定义，按需记录。 | `[{"type":"function","name":"add","parameters":{"type":"object"}}]` |
+
+**工具调用**
+
+| 字段 | 说明 | 示例 |
+| --- | --- | --- |
 | `gen_ai.tool.name` | 工具步骤执行的工具名称。 | `"add"` |
 | `gen_ai.tool.description` | 工具用途说明。 | `"两数相加"` |
 | `gen_ai.tool.type` | 工具类型，如 function、extension、datastore。 | `"function"` |
 | `gen_ai.tool.call.id` | 关联模型工具调用消息与工具执行步骤的 ID。 | `"call-1"` |
 | `gen_ai.tool.call.arguments` | 工具调用参数。 | `{"a":1,"b":2}` |
 | `gen_ai.tool.call.result` | 工具调用结果。 | `{"sum":3}` |
+| `gen_ai.tool.definitions` | 可用工具定义，按需记录。 | `[{"type":"function","name":"add","description":"加法","parameters":{"type":"object"}}]` |
+
+**Token 用量**
+
+| 字段 | 说明 | 示例 |
+| --- | --- | --- |
 | `gen_ai.usage.input_tokens` | 输入 Token 总数，包含缓存读取和写入。 | `100` |
 | `gen_ai.usage.output_tokens` | 输出 Token 总数，包含推理 Token。 | `20` |
 | `gen_ai.usage.cache_read.input_tokens` | 输入 Token 中的缓存读取部分。 | `30` |
 | `gen_ai.usage.cache_write.input_tokens` | 输入 Token 中的缓存写入部分。 | `10` |
 | `gen_ai.usage.reasoning.output_tokens` | 输出 Token 中的推理部分。 | `5` |
-| `gen_ai.agent.id` | Agent 稳定标识。 | `"agent-1"` |
-| `gen_ai.agent.name` | Agent 展示名称。 | `"Assistant"` |
-| `gen_ai.agent.description` | Agent 用途说明。 | `"问答助手"` |
-| `gen_ai.agent.version` | Agent 版本。 | `"1.0.0"` |
-| `gen_ai.conversation.id` | 框架或应用已有的真实会话标识。 | `"conv-1"` |
+
+**用户与错误**
+
+| 字段 | 说明 | 示例 |
+| --- | --- | --- |
 | `user.id` | 用户标识。 | `"user-1"` |
 | `user.name` | 用户名称。 | `"demo"` |
 | `user.hash` | 用户哈希标识。 | `"a1b2c3"` |
 | `error.type` | 失败时记录的低基数错误类型。 | `"timeout"` |
 
-- *[1] 按步骤提供实际发生的字段：模型调用填写输入、输出消息和 Token 用量，工具步骤填写工具名称、调用 ID、参数及结果，Agent 步骤填写自身输入、最终输出及身份信息。*
-- *[2] 缓存读取和写入包含在输入 Token 总数中，推理 Token 包含在输出 Token 总数中，统计总量时不重复相加。*
-- *[3] 响应状态、停止原因及 Token 用量仅在原数据提供时填写，不从 Span 状态推导，也不用示例值补齐缺失数据。*
-
-字段类型、枚举及消息 Part 的详细结构见下文<a href="#0x01-标准字段参考" target="_blank">标准字段参考</a>。
+- *[1] 缓存读取和写入包含在输入 Token 总数中，推理 Token 包含在输出 Token 总数中，统计总量时不重复相加。*
+- *[2] 响应状态、停止原因和 Token 用量仅在原数据提供时填写，不从 Span 状态推导，也不用示例值补齐缺失数据。*
 
 ## 0x01 标准字段参考
 
@@ -465,45 +602,3 @@ Part `type` 取值（well-known 集合 + GenericPart 自定义，前端对未知
 ```json
 {"temperature": 25, "condition": "晴", "humidity": 40}
 ```
-
-
-## 0x02 字段总表
-
-> 仅列字段名 + 简要说明，供快速对照。详细规则见上文各表。
-
-| 字段 | 说明 |
-|------|------|
-| `gen_ai.operation.name` | 操作名称（开放枚举；已知值尽可能归一，未知产品值透传） |
-| `gen_ai.provider.name` | 模型供应商（openai/alibaba/deepseek 等） |
-| `gen_ai.request.model` | 请求模型名 |
-| `gen_ai.request.temperature` | 温度参数 |
-| `gen_ai.request.stream` | 是否流式 |
-| `gen_ai.request.reasoning.level` | 推理级别 |
-| `gen_ai.response.id` | 响应 ID |
-| `gen_ai.response.model` | 实际响应模型名 |
-| `gen_ai.response.status` | 响应生命周期状态；缺失时前端显示“未知” |
-| `gen_ai.response.finish_reasons` | 完成原因列表 |
-| `gen_ai.response.time_to_first_chunk` | 首 token 延迟（秒） |
-| `gen_ai.input.messages` | 输入消息 ChatMessage[] 🧾 |
-| `gen_ai.system_instructions` | 系统指令 Part[] 🧾 |
-| `gen_ai.output.messages` | 输出消息 OutputMessage[] 🧾 |
-| `gen_ai.tool.definitions` | 工具定义 ToolDefinition[] 🧾 |
-| `gen_ai.tool.name` | 工具名 |
-| `gen_ai.tool.description` | 工具描述 |
-| `gen_ai.tool.type` | 工具类型（function） |
-| `gen_ai.tool.call.id` | 工具调用 ID |
-| `gen_ai.tool.call.arguments` | 工具调用参数 🧾 |
-| `gen_ai.tool.call.result` | 工具返回结果 🧾 |
-| `gen_ai.usage.input_tokens` | 输入 token |
-| `gen_ai.usage.output_tokens` | 输出 token |
-| `gen_ai.usage.cache_read.input_tokens` | 缓存读取 token |
-| `gen_ai.usage.cache_write.input_tokens` | 缓存写入 token |
-| `gen_ai.usage.reasoning.output_tokens` | 推理 token |
-| `gen_ai.agent.id` | Agent ID |
-| `gen_ai.agent.name` | Agent 名 |
-| `gen_ai.agent.description` | Agent 描述 |
-| `gen_ai.agent.version` | Agent 版本 |
-| `gen_ai.conversation.id` | 会话 ID |
-| `user.id` | 用户 ID |
-| `user.name` | 用户名 |
-| `user.hash` | 用户哈希 |
