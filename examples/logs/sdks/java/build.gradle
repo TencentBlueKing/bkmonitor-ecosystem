@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.tencent.bkm.demo'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+    mavenCentral()
+}
+
+dependencies {
+    // OpenTelemetry Logs SDK & OTLP HTTP Exporter
+    implementation platform('io.opentelemetry:opentelemetry-bom:1.42.1')
+    implementation 'io.opentelemetry:opentelemetry-sdk'
+    implementation 'io.opentelemetry:opentelemetry-sdk-logs'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    implementation 'io.opentelemetry.semconv:opentelemetry-semconv:1.27.0-alpha'
+}
+
+application {
+    mainClassName = 'com.tencent.bkm.demo.Main'
+}
+
+allprojects {
+    tasks.withType(JavaCompile) {
+        options.encoding = "UTF-8"
+        options.compilerArgs.add "-parameters"
+    }
+}
