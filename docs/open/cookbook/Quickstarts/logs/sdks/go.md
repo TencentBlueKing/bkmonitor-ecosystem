@@ -4,44 +4,40 @@
 
 ### 1.1 术语介绍
 
-* <a href="./README.md" target="_blank">自定义日志 OpenTelemetry SDK 上报</a>：介绍日志数据源的创建流程和查看数据入口。
+* <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/sdks/README.md" target="_blank">自定义日志 OpenTelemetry SDK 上报</a>
 
-* <a href="https://opentelemetry.io/docs/concepts/signals/logs/" target="_blank">Logs（OTel 日志）</a>：OpenTelemetry 中记录离散事件的信号类型。
+* <a href="https://opentelemetry.io/docs/concepts/signals/logs/" target="_blank">Logs（OTel 日志）</a>：OpenTelemetry 中用于描述离散日志事件的信号类型。
 
-* <a href="https://opentelemetry.io/docs/specs/otel/logs/data-model/" target="_blank">Logs Data Model（OTel 日志数据模型）</a>：定义日志记录、资源属性等字段的含义。
+* <a href="https://opentelemetry.io/docs/specs/otel/logs/data-model/" target="_blank">Logs Data Model（OTel 日志数据模型）</a>：定义 `resourceLogs`、`scopeLogs`、`logRecords`、`body`、`attributes`、`severityNumber` 等字段含义。
 
-* <a href="https://opentelemetry.io/docs/specs/otlp/#otlphttp" target="_blank">OTLP/HTTP</a>：通过 HTTP 传输 OpenTelemetry 数据的协议，本样例使用 `/v1/logs` 上报日志。
+* <a href="https://opentelemetry.io/docs/specs/otlp/#otlphttp" target="_blank">OTLP/HTTP（OpenTelemetry HTTP 上报协议）</a>：定义通过 HTTP 上报 OTel 数据的协议方式，Go SDK 通过 `/v1/logs` 上报日志。
 
 ### 1.2 开发环境要求
 
-在开始之前，请确保已经安装：
+在开始之前，请确保您已经安装了以下软件：
 
-* Git。
+* Git
 
-* Docker 或兼容的容器工具。Dockerfile 使用 Go 1.26 构建，无需在宿主机安装 Go；直接运行 `go run .` 则需要 Go 1.26 或更新版本。
+* Docker 或者其他平替的容器工具。
 
 ### 1.3 初始化 demo
-
-克隆仓库并进入样例目录：
 
 ```shell
 git clone https://github.com/TencentBlueKing/bkmonitor-ecosystem
 cd bkmonitor-ecosystem/examples/logs/sdks/go
 ```
 
-命令用法见 <a href="https://git-scm.com/docs/git-clone" target="_blank">Git clone 官方文档</a>。
-
 ## 2. 快速接入
 
 ### 2.1 创建应用
 
-参考 <a href="./README.md" target="_blank">自定义日志 OpenTelemetry SDK 上报</a> 创建上报协议为 `OTLP/HTTP (Protobuf)` 的日志数据源，并记录页面提供的两个配置项：
+参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/sdks/README.md" target="_blank">自定义日志 OpenTelemetry SDK 上报</a> 创建一个自定义日志数据源，关注创建后提供的两个配置项：
 
-* `TOKEN`：日志数据源 Token，上报时通过 `x-bk-token` 请求头传递。
+* `TOKEN`：日志数据源 Token，上报时必须通过 `x-bk-token` Header 传递。
 
-* `API_URL`：完整的日志上报地址，包含 `http://` 或 `https://`，路径以 `/v1/logs` 结尾。如果页面只提供 OTLP/HTTP Endpoint 根地址，请追加 `/v1/logs`。
+* `API_URL`：完整的日志上报地址。示例地址为「 http://127.0.0.1:4318/v1/logs 」，实际地址请根据页面接入指引填写，并确保运行容器的环境能够访问。
 
-确认运行样例的主机能够访问上报地址。Token 应通过环境变量传入，不要写入源码或提交到仓库。
+**有任何问题可企微联系`蓝鲸助手`协助处理**。
 
 ### 2.2 样例运行参数
 
@@ -49,52 +45,66 @@ cd bkmonitor-ecosystem/examples/logs/sdks/go
 
 | 配置 | 必填 | 说明 |
 | --- | --- | --- |
-| `API_URL` | 是 | ❗❗【非常重要】当前数据源的完整 OTLP/HTTP 日志上报地址；如果页面只给出 Endpoint 根地址，请追加 `/v1/logs`。 |
-| `TOKEN` | 是 | ❗❗【非常重要】当前数据源的 Token，通过 `x-bk-token` 请求头发送。 |
-
-请使用接收 OTLP/HTTP Protobuf 日志的地址，不能使用仅接收普通 JSON 日志的接口。
+| `API_URL` | 是 | ❗❗【非常重要】日志上报接口地址（`Access URL`），请根据页面接入指引填写；如果页面提供的是 OTLP HTTP Endpoint 根地址，请在末尾追加 `/v1/logs`。 |
+| `TOKEN` | 是 | ❗❗【非常重要】日志数据源 Token，上报时必须通过 `x-bk-token` Header 传递。 |
 
 #### 2.2.1 关键配置
 
-样例从环境变量读取并校验 `API_URL` 和 `TOKEN`。创建 Exporter 时，使用完整上报地址和当前数据源的 Token：
+使用 OpenTelemetry Go SDK 进行日志上报时，需正确配置以下核心参数：
 
 ```go
-exporter, err := otlploghttp.New(ctx,
-		otlploghttp.WithEndpointURL(endpoint),
-		otlploghttp.WithHeaders(map[string]string{"x-bk-token": token}),
-	)
-```
+// ❗❗【非常重要】填写页面提供的完整 OTLP/HTTP 日志地址，路径以 /v1/logs 结尾。
+endpoint := strings.TrimSpace(os.Getenv("API_URL"))
+// ❗❗【非常重要】填写当前日志数据源的 Token，Exporter 将其放在 x-bk-token 请求头中。
+token := strings.TrimSpace(os.Getenv("TOKEN"))
 
-关于配置方法，请参考 <a href="https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp" target="_blank">OTLP/HTTP 日志 Exporter 官方 API 文档</a>。完整的配置校验及错误处理见下文样例代码。
+// 创建 OTLP HTTP Log Exporter，注入认证 Header
+exporter, err := otlploghttp.New(ctx,
+	otlploghttp.WithEndpointURL(endpoint),
+	otlploghttp.WithHeaders(map[string]string{"x-bk-token": token}),
+)
+if err != nil {
+	return fmt.Errorf("创建 OTLP 日志 Exporter: %w", err)
+}
+
+// 创建 LoggerProvider，关联资源属性（服务名、环境等）
+provider := sdklog.NewLoggerProvider(
+	sdklog.WithResource(resource.NewWithAttributes("",
+		attribute.String("service.name", "logs-sdk-go"),
+		attribute.String("deployment.environment.name", "local"),
+	)),
+	sdklog.WithProcessor(sdklog.NewBatchProcessor(exporter)),
+)
+
+// 将 Go 标准库 slog 桥接到 OTel LoggerProvider
+logger := otelslog.NewLogger("logs-sdk-go", otelslog.WithLoggerProvider(provider))
+```
 
 ### 2.3 运行样例
 
-完整样例位于 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/logs/sdks/go" target="_blank">bkmonitor-ecosystem/examples/logs/sdks/go</a>。构建 Docker 镜像，并使用页面提供的完整上报地址和 Token 运行容器；下面的尖括号内容是占位符，运行前请替换：
+示例代码也可以在样例仓库 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/logs/sdks/go" target="_blank">bkmonitor-ecosystem/examples/logs/sdks/go</a> 中找到。
+
+通过 docker build 构建名为 logs-sdk-go 的镜像，并使用 docker run 运行容器，同时通过环境变量 TOKEN、API_URL 传递配置参数。下面的尖括号内容是占位符，运行前请替换：
 
 ```bash
 docker build -t logs-sdk-go .
 
-docker run --rm \
-  -e API_URL="<页面提供的完整 OTLP/HTTP 日志上报地址>" \
-  -e TOKEN="<日志数据源 Token>" \
-  logs-sdk-go
+docker run --rm -e TOKEN="<日志数据源 Token>" \
+ -e API_URL="<页面提供的完整 OTLP/HTTP 日志上报地址>" \
+ logs-sdk-go
 ```
 
-命令用法见 <a href="https://docs.docker.com/reference/cli/docker/buildx/build/" target="_blank">Docker build 官方文档</a>和 <a href="https://docs.docker.com/reference/cli/docker/container/run/" target="_blank">Docker run 官方文档</a>。
+运行输出：
 
-样例上报一条 INFO 级别日志后退出。SDK 未报告发送错误时，终端输出：
-
-```text
+```bash
 日志已发送，请到对应索引集检索
 ```
 
-这不代表日志已经入库。进入「日志采集 → 采集详情 → 查看数据」，在当前数据源对应的索引集中检索 `Go SDK 日志上报示例`。入库和索引刷新可能需要一段时间。如果没有查到日志，请确认地址、Token、网络、索引集和检索时间范围；终端出现 `发送日志` 错误时，先检查地址、鉴权和网络配置。
-
-也可以在安装 Go 1.26 或更新版本的宿主机上设置相同的环境变量，进入样例目录执行 `go run .`。
+样例上报一条 INFO 级别日志后退出，可在对应索引集中检索 `Go SDK 日志上报示例`。
 
 ### 2.4 样例代码
 
-样例先校验配置，再创建 OTLP/HTTP Exporter 和 `LoggerProvider`。`otelslog` 将 Go 标准库 `slog` 的消息和属性转换为 OpenTelemetry 日志记录。退出前调用 `Shutdown`，等待批处理器发送日志：
+该样例使用 OpenTelemetry Go SDK，通过 OTLP/HTTP 协议上报日志。代码通过 `otelslog` 将 Go 标准库 `slog` 桥接到 OTel LoggerProvider，并在退出前调用 `Shutdown`，等待批处理器发送日志。
 
 ```go
 package main
@@ -163,10 +173,12 @@ func main() {
 }
 ```
 
-`service.name` 和 `deployment.environment.name` 描述产生日志的服务；`demo.source` 描述本条日志事件。关于桥接器和 Exporter 的接口，请参考 <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/bridges/otelslog" target="_blank">otelslog 官方 API 文档</a>和 <a href="https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp" target="_blank">OTLP/HTTP 日志 Exporter 官方 API 文档</a>。
-
 ## 3. 了解更多
 
-* 参考 <a href="./README.md" target="_blank">自定义日志 OpenTelemetry SDK 上报</a> 的「查看数据」和「常见问题」部分，了解索引集选择与排查步骤。
+进一步了解以下内容：
 
-* 关于 Go 日志桥接器和 Exporter，请参考 <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/bridges/otelslog" target="_blank">otelslog 官方 API 文档</a>和 <a href="https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp" target="_blank">OTLP/HTTP 日志 Exporter 官方 API 文档</a>。
+* 参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/cookbook/Quickstarts/logs/sdks/README.md" target="_blank">自定义日志 OpenTelemetry SDK 上报</a> 的「查看数据」和「常见问题」部分。
+
+* 了解 <a href="https://pkg.go.dev/go.opentelemetry.io/contrib/bridges/otelslog" target="_blank">otelslog 官方 API 文档</a>。
+
+* 了解 <a href="https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp" target="_blank">OTLP/HTTP 日志 Exporter 官方 API 文档</a>。
