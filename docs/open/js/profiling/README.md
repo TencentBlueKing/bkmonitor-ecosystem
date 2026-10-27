@@ -16,8 +16,6 @@
 
 ### 1.2 接入样例获取
 
-Git 仅用于拉取样例代码，Docker（或其他兼容容器工具）仅用于构建和运行容器样例，供快速验证数据接入。Git 和 Docker 均不是数据上报依赖，接入已有业务时可直接参考后文的上报协议或 SDK 配置。
-
 若本地直接运行，需要 Node.js `20.20.2` 或更高版本。当前 `@pyroscope/nodejs@0.6.3` 声明了该最低版本，样例 Docker 镜像使用 Node 22。
 
 ```shell
@@ -25,6 +23,9 @@ git clone https://github.com/TencentBlueKing/bkmonitor-ecosystem
 cd bkmonitor-ecosystem/examples/js-examples/profiling
 docker build -t profiling-js:latest .
 ```
+
+- *[1] Git 用于获取样例，Docker（或兼容容器工具）用于构建和运行容器样例，仅供快速验证。*
+- *[2] 数据上报不依赖 Git 或 Docker，已有业务可直接参考后文的上报协议或 SDK 配置接入。*
 
 ## 2. 快速体验
 

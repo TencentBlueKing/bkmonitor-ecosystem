@@ -14,12 +14,13 @@
 
 ### 1.2 接入样例获取
 
-Git 仅用于拉取样例代码，Docker（或其他兼容容器工具）仅用于构建和运行容器样例，供快速验证数据接入。Git 和 Docker 均不是数据上报依赖，接入已有业务时可直接参考后文的上报协议或 SDK 配置。
-
 ```shell
 git clone {{ECOSYSTEM_REPOSITORY_URL}}
 cd {{ECOSYSTEM_REPOSITORY_NAME}}/examples/logs/sdks/python
 ```
+
+- *[1] Git 用于获取样例，Docker（或兼容容器工具）用于构建和运行容器样例，仅供快速验证。*
+- *[2] 数据上报不依赖 Git 或 Docker，已有业务可直接参考后文的上报协议或 SDK 配置接入。*
 
 ## 2. 快速接入
 
