@@ -8,13 +8,11 @@
 
 {{TERM_INTRO}}
 
-### 1.2 开发环境要求
+### 1.2 接入样例获取
 
-在开始之前，请确保您已经安装了以下软件：
-* Git
-* Go 1.21 或更高版本
+Git 仅用于拉取样例代码，Docker（或其他兼容容器工具）仅用于构建和运行容器样例，供快速验证数据接入。Git 和 Docker 均不是数据上报依赖，接入已有业务时可直接参考后文的上报协议或 SDK 配置。
 
-### 1.3 初始化 demo
+若本地直接运行样例，需要 Go 1.21 或更高版本。
 
 ```shell
 git clone {{ECOSYSTEM_REPOSITORY_URL}}
@@ -56,7 +54,7 @@ docker run -e TOKEN="{{access_config.token}}" \
 go get github.com/grafana/pyroscope-go@v1.1.2
 ```
 
-示例项目提供集成 Pyroscope Go SDK 并将性能数据发送到 bk-collector 的方式，可以参考 <a href="{{ECOSYSTEM_CODE_ROOT_URL}}/examples/go-examples/helloworld/service/profiling/profiling.go" target="_blank">service/profiling/profiling.go</a> 进行接入:
+示例项目提供集成 Pyroscope Go SDK 并将性能数据发送到 bk-collector 的方式，可以参考 <a href="{{ECOSYSTEM_CODE_ROOT_URL}}/examples/go-examples/helloworld/service/profiling/profiling.go" target="_blank">service/profiling/profiling.go</a> 进行接入：
 
 ```go
 profiler, _ = pyroscope.Start(

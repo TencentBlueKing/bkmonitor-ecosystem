@@ -8,13 +8,9 @@
 
 {{TERM_INTRO}}
 
-### 1.2 开发环境要求
+### 1.2 接入样例获取
 
-在开始之前，请确保您已经安装了以下软件：
-* Git
-* Docker 或者其他平替的容器工具。
-
-### 1.3 初始化 demo
+Git 仅用于拉取样例代码，Docker（或其他兼容容器工具）仅用于构建和运行容器样例，供快速验证数据接入。Git 和 Docker 均不是数据上报依赖，接入已有业务时可直接参考后文的上报协议或 SDK 配置。
 
 ```shell
 git clone {{ECOSYSTEM_REPOSITORY_URL}}.git

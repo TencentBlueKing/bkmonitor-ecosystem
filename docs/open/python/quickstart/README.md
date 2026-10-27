@@ -2,14 +2,9 @@
 
 本示例仅演示如何将 <a href="https://opentelemetry.io/docs/concepts/signals/traces/" target="_blank">Traces</a>、<a href="https://opentelemetry.io/docs/concepts/signals/metrics/" target="_blank">Metrics</a>、<a href="https://opentelemetry.io/docs/concepts/signals/logs/" target="_blank">Logs</a>、<a href="https://grafana.com/docs/pyroscope/latest/introduction/profiling/" target="_blank">Profiling</a> 四类观测数据接入蓝鲸应用性能监控。
 
-## 1. 环境要求
+## 1. 接入样例获取
 
-在开始之前，请确保您已经安装了以下软件：
-* Git
-* Docker 或者其他平替的容器工具。
-
-
-## 2. 初始化示例 demo
+Git 仅用于拉取样例代码，Docker（或其他兼容容器工具）仅用于构建和运行容器样例，供快速验证数据接入。Git 和 Docker 均不是数据上报依赖，接入已有业务时可直接参考后文的上报协议或 SDK 配置。
 
 ```shell
 git clone https://github.com/TencentBlueKing/bkmonitor-ecosystem
@@ -18,7 +13,7 @@ docker build -t helloworld-python:latest .
 ```
 
 
-## 3. 运行示例 demo
+## 2. 运行示例 demo
 
 复制以下命令参数在你的终端运行：
 

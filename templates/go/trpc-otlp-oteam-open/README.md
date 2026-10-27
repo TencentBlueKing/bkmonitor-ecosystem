@@ -13,15 +13,11 @@
 {{TERM_INTRO}}
 * <a href="https://github.com/trpc-ecosystem/go-opentelemetry" target="_blank">OpenTelemetry Oteam</a>：OpenTelemetry Oteam 定位于云原生可观测性（监控，分布式追踪，日志） 标准制定和工具建设。
 
-### 1.2 开发环境要求
+### 1.2 接入样例获取
 
-在开始之前，请确保已经安装了以下软件：
-* Git
-* Docker 或者其他平替的容器工具。
+Git 仅用于拉取样例代码，Docker（或其他兼容容器工具）仅用于构建和运行容器样例，供快速验证数据接入。Git 和 Docker 均不是数据上报依赖，接入已有业务时可直接参考后文的上报协议或 SDK 配置。
 
 请确保已了解 <a href="https://trpc.group/zh/docs/languages/go/" target="_blank">tRPC-Go</a> 开发流程。
-
-### 1.3 运行 demo
 
 ```shell
 git clone {{ECOSYSTEM_REPOSITORY_URL}}
@@ -78,8 +74,8 @@ import _ "trpc.group/trpc-go/trpc-opentelemetry/oteltrpc"
 | `plugins.telemetry.opentelemetry.attributes[0].value`                                   | 数据上报 `service_name` 字段 *[1]*。    | 例如 `example.greeter`。                   |
 | `plugins.telemetry.opentelemetry.metrics.prometheus_push.grouping.service_name`         | 同上。                              |                                         |
 | `plugins.telemetry.opentelemetry.metrics.prometheus_push.grouping.instance` *[2]*       | 实例                               | Pod 的 IP 地址（容器部署）或本机 IP（物理机或虚拟机部署）      |
-| `plugins.telemetry.opentelemetry.metrics.prometheus_push.grouping.namespace` *[2]*      | 物理环境                             | 请保持和配置文件中的 ${物理环境(global.namespace)} 一致 |
-| `plugins.telemetry.opentelemetry.metrics.prometheus_push.grouping.env_name` *[2]*       | 用户环境                             | 请保持和配置文件中的 ${用户环境(global.env_name)} 一致  |
+| `plugins.telemetry.opentelemetry.metrics.prometheus_push.grouping.namespace` *[2]*      | 物理环境                             | 请保持和配置文件中的 ${物理环境（global.namespace）} 一致 |
+| `plugins.telemetry.opentelemetry.metrics.prometheus_push.grouping.env_name` *[2]*       | 用户环境                             | 请保持和配置文件中的 ${用户环境（global.env_name）} 一致  |
 | `plugins.telemetry.opentelemetry.metrics.prometheus_push.grouping.container_name` *[2]* | Pod 的名称                          |                                         |
 
 * [1] 只有准确填写 `sevice_name` 配置，服务才能关联到上报的「自定义指标」。
@@ -254,7 +250,7 @@ template:
 
 #### 4.2.2 错误码重定义
 
-可设置特定错误码的类型, 以便计算错误率/超时率/成功率和看板展示错误码描述。
+可设置特定错误码的类型， 以便计算错误率/超时率/成功率和看板展示错误码描述。
 
 该配置在 Traces、Metrics 同时生效。
 
