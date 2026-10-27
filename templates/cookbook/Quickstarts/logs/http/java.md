@@ -6,16 +6,15 @@
 
 {{LOGS_HTTP_TERM_INTRO}}
 
-### 1.2 开发环境要求
-
-{{LOGS_HTTP_DEV_REQUIREMENTS}}
-
-### 1.3 初始化 demo
+### 1.2 接入样例获取
 
 ```shell
 git clone {{ECOSYSTEM_REPOSITORY_URL}}
 cd {{ECOSYSTEM_REPOSITORY_NAME}}/examples/logs/http/java
 ```
+
+- *[1] Git 用于获取样例，Docker（或兼容容器工具）用于构建和运行容器样例，仅供快速验证。*
+- *[2] 数据上报不依赖 Git 或 Docker，已有业务可直接参考后文的上报协议或 SDK 配置接入。*
 
 ## 2. 快速接入
 

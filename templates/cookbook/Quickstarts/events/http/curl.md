@@ -6,23 +6,15 @@
 
 * <a href="{{docs.events.http.Http_Preadme}}" target="_blank">自定义事件 HTTP 上报</a>
 
-### 1.2 开发环境要求
-
-在开始之前，请确保您已经安装了以下软件：
-
-* Git
-
-```shell
-＃ 可输入命令查看 git 是否安装
-git --version
-```
-
-### 1.3 初始化 demo
+### 1.2 接入样例获取
 
 ```shell
 git clone {{ECOSYSTEM_REPOSITORY_URL}}
 cd {{ECOSYSTEM_REPOSITORY_NAME}}/examples/events/curl
 ```
+
+- *[1] Git 用于获取样例代码，仅供快速验证。*
+- *[2] 数据上报不依赖 Git，已有业务可直接参考后文的上报协议或 SDK 配置接入。*
 
 ## 2. 快速接入
 

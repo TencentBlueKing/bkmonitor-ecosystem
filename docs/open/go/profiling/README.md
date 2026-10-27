@@ -16,19 +16,18 @@
 * APM：蓝鲸观测平台应用性能监控，提供四类观测数据开箱即用的观测能力。
 * <a href="https://github.com/TencentBlueKing/bkmonitor-datalink/tree/main/pkg/collector" target="_blank">bk-collector</a>：腾讯蓝鲸的 APM 服务端组件，负责接收 Prometheus、OpenTelemetry、Jaeger、Skywalking 等主流开源组件的观测数据，并对数据进行清洗转发到观测平台链路。
 
-### 1.2 开发环境要求
+### 1.2 接入样例获取
 
-在开始之前，请确保您已经安装了以下软件：
-* Git
-* Go 1.21 或更高版本
-
-### 1.3 初始化 demo
+若本地直接运行样例，需要 Go 1.21 或更高版本。
 
 ```shell
 git clone https://github.com/TencentBlueKing/bkmonitor-ecosystem
 cd bkmonitor-ecosystem/examples/go-examples/helloworld
 docker build -t helloworld-go:latest .
 ```
+
+- *[1] Git 用于获取样例，Docker（或兼容容器工具）用于构建和运行容器样例，仅供快速验证。*
+- *[2] 数据上报不依赖 Git 或 Docker，已有业务可直接参考后文的上报协议或 SDK 配置接入。*
 
 ## 2. 快速体验
 
@@ -81,7 +80,7 @@ docker run -e TOKEN="xxx" \
 go get github.com/grafana/pyroscope-go@v1.1.2
 ```
 
-示例项目提供集成 Pyroscope Go SDK 并将性能数据发送到 bk-collector 的方式，可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/helloworld/service/profiling/profiling.go" target="_blank">service/profiling/profiling.go</a> 进行接入:
+示例项目提供集成 Pyroscope Go SDK 并将性能数据发送到 bk-collector 的方式，可以参考 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/tree/master/examples/go-examples/helloworld/service/profiling/profiling.go" target="_blank">service/profiling/profiling.go</a> 进行接入：
 
 ```go
 profiler, _ = pyroscope.Start(

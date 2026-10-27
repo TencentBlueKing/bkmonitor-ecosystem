@@ -8,19 +8,16 @@
 
 {{TERM_INTRO}}
 
-### 1.2 开发环境要求
-
-在开始之前，请确保您已经安装了以下软件：
-* Git
-* Docker 或者其他平替的容器工具。
-
-### 1.3 初始化 demo
+### 1.2 接入样例获取
 
 ```shell
 git clone {{ECOSYSTEM_REPOSITORY_URL}}
 cd {{ECOSYSTEM_REPOSITORY_NAME}}/examples/python-examples/profiling
 docker build -t profiling-python:latest .
 ```
+
+- *[1] Git 用于获取样例，Docker（或兼容容器工具）用于构建和运行容器样例，仅供快速验证。*
+- *[2] 数据上报不依赖 Git 或 Docker，已有业务可直接参考后文的上报协议或 SDK 配置接入。*
 
 ## 2. 快速接入
 
@@ -40,7 +37,7 @@ pip install pyroscope-io==0.8.8
 
 示例项目使用 <a href="https://grafana.com/docs/pyroscope/latest/configure-client/language-sdks/python/" target="_blank">pyroscope-io</a> 指定的配置方式，将性能数据发送到 bk-collector。
 
-可以参考 `main.py` 文件进行接入:
+可以参考 `main.py` 文件进行接入：
 
 ```python
 import pyroscope

@@ -16,19 +16,16 @@
 * APM：蓝鲸观测平台应用性能监控，提供四类观测数据开箱即用的观测能力。
 * <a href="https://github.com/TencentBlueKing/bkmonitor-datalink/tree/main/pkg/collector" target="_blank">bk-collector</a>：腾讯蓝鲸的 APM 服务端组件，负责接收 Prometheus、OpenTelemetry、Jaeger、Skywalking 等主流开源组件的观测数据，并对数据进行清洗转发到观测平台链路。
 
-### 1.2 开发环境要求
-
-在开始之前，请确保您已经安装了以下软件：
-* Git
-* Docker 或者其他平替的容器工具。
-
-### 1.3 初始化 demo
+### 1.2 接入样例获取
 
 ```shell
 git clone https://github.com/TencentBlueKing/bkmonitor-ecosystem
 cd bkmonitor-ecosystem/examples/python-examples/helloworld-automatic
 docker build -t helloworld-automatic-python:latest .
 ```
+
+- *[1] Git 用于获取样例，Docker（或兼容容器工具）用于构建和运行容器样例，仅供快速验证。*
+- *[2] 数据上报不依赖 Git 或 Docker，已有业务可直接参考后文的上报协议或 SDK 配置接入。*
 
 ## 2. 快速接入
 

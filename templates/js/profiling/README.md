@@ -8,20 +8,18 @@
 
 {{TERM_INTRO}}
 
-### 1.2 开发环境要求
+### 1.2 接入样例获取
 
-在开始之前，请确保您已经安装了以下软件：
-* Git
-* Docker 或者其他平替的容器工具。
-* 若本地直接运行，需要 Node.js `20.20.2` 或更高版本。当前 `@pyroscope/nodejs@0.6.3` 声明了该最低版本，样例 Docker 镜像使用 Node 22。
-
-### 1.3 初始化 demo
+若本地直接运行，需要 Node.js `20.20.2` 或更高版本。当前 `@pyroscope/nodejs@0.6.3` 声明了该最低版本，样例 Docker 镜像使用 Node 22。
 
 ```shell
 git clone {{ECOSYSTEM_REPOSITORY_URL}}
 cd {{ECOSYSTEM_REPOSITORY_NAME}}/examples/js-examples/profiling
 docker build -t profiling-js:latest .
 ```
+
+- *[1] Git 用于获取样例，Docker（或兼容容器工具）用于构建和运行容器样例，仅供快速验证。*
+- *[2] 数据上报不依赖 Git 或 Docker，已有业务可直接参考后文的上报协议或 SDK 配置接入。*
 
 ## 2. 快速体验
 
