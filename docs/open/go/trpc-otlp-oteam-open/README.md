@@ -32,15 +32,14 @@ make setup
 make pb
 
 # 💡token & otlp_endpoint & otlp_http_endpoint 需要准确配置才有数据上报，请继续阅读文档以了解环境变量用途和取值。
-# 💡如需后台运行容器，请加 -d 作为参数
 make dev \
   token="xxx" \
   otlp_endpoint="127.0.0.1:4317" \
   otlp_http_endpoint="http://127.0.0.1:4318"
 ```
 
-- *[1] Git 用于获取样例，Docker（或兼容容器工具）用于构建和运行容器样例，仅供快速验证。*
-- *[2] 数据上报不依赖 Git 或 Docker，已有业务可直接参考后文的上报协议或 SDK 配置接入。*
+- *[1] Git 用于获取样例代码，仅供快速验证。*
+- *[2] 数据上报不依赖 Git，已有业务可直接参考后文的上报协议或 SDK 配置接入。*
 
 ## 2. 快速接入
 
