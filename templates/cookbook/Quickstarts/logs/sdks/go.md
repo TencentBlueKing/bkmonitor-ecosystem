@@ -30,9 +30,7 @@ cd {{ECOSYSTEM_REPOSITORY_NAME}}/examples/logs/sdks/go
 
 * `TOKEN`：日志数据源 Token，上报时必须通过 `x-bk-token` Header 传递。
 
-* `API_URL`：国内站点默认是「 {{access_config.otlp.http_endpoint_without_schema}} 」，其他环境、跨云场景请根据页面接入指引填写。
-
-> **说明**：Go SDK 的 `otlploghttp.WithEndpoint()` 仅需填写 Host（如 `127.0.0.1:4318`），SDK 会自动在请求路径末尾追加 `/v1/logs`。
+* `API_URL`：国内站点默认是「 {{access_config.otlp.http_endpoint}}/v1/logs 」，其他环境、跨云场景请根据页面接入指引填写。
 
 **有任何问题可企微联系`蓝鲸助手`协助处理**。
 
@@ -69,31 +67,39 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
+// newHttpExporter 创建 OTLP HTTP 日志导出器。
+// endpointURL 为完整上报地址（例如 http://127.0.0.1:4318/v1/logs），
+// SDK 通过 WithEndpointURL 自动解析协议和路径。
+func newHttpExporter(endpointURL, token string) (*otlploghttp.Exporter, error) {
+	return otlploghttp.New(
+		context.Background(),
+		otlploghttp.WithEndpointURL(endpointURL),
+		otlploghttp.WithHeaders(map[string]string{"X-BK-TOKEN": token}),
+	)
+}
+
 // ❗❗【非常重要】认证令牌，用于接口鉴权，请替换为页面提供的日志数据源 Token。
 token := getEnv("TOKEN", "fixme")
 // ❗❗【非常重要】上报地址，国内站点默认是「 {{access_config.otlp.http_endpoint}}/v1/logs 」，
-// 其他环境、跨云场景请根据页面接入指引填写
-apiURL := getEnv("API_URL", "{{access_config.otlp.http_endpoint_without_schema}}")
+// 其他环境、跨云场景请根据页面接入指引填写。
+apiURL := getEnv("API_URL", "{{access_config.otlp.http_endpoint}}/v1/logs")
 
 // 创建 OTLP HTTP Log Exporter，注入认证 Header
-exporter, err := otlploghttp.New(
-	context.Background(),
-	otlploghttp.WithEndpoint(apiURL),
-	otlploghttp.WithHeaders(map[string]string{"X-BK-TOKEN": token}),
-)
+exporter, err := newHttpExporter(apiURL, token)
 if err != nil {
 	// 处理错误
 }
 
-// 创建 LoggerProvider，关联资源属性（服务名、环境等）
+// 创建资源属性（服务名、环境等）
+res := resource.NewSchemaless(
+	attribute.String("service.name", "custom-log-sdk-demo"),
+	attribute.String("deployment.environment.name", "local"),
+)
+
+// 创建 LoggerProvider，关联资源属性
 provider := sdklog.NewLoggerProvider(
 	sdklog.WithProcessor(sdklog.NewBatchProcessor(exporter)),
-	sdklog.WithResource(
-		resource.NewSchemaless(
-			attribute.String("service.name", "custom-log-sdk-demo"),
-			attribute.String("deployment.environment.name", "local"),
-		),
-	),
+	sdklog.WithResource(res),
 )
 global.SetLoggerProvider(provider)
 
@@ -111,18 +117,18 @@ otelLogger := provider.Logger("otel")
 docker build -t logs-sdk-go .
 
 docker run -e TOKEN="fixme" \
- -e API_URL="{{access_config.otlp.http_endpoint_without_schema}}" \
+ -e API_URL="{{access_config.otlp.http_endpoint}}/v1/logs" \
  logs-sdk-go
 ```
 
 运行输出：
 
 ```bash
-2026/11/04 06:24:22.347300 Starting log reporter (exporter=stdout) ...
-2026/11/04 06:24:23.348018 DEBUG - log from opentelemetry sdk (count=1)
-2026/11/04 06:24:24.347431 INFO - log from opentelemetry sdk (count=2)
-2026/11/04 06:24:25.347531 WARN - log from opentelemetry sdk (count=3)
-2026/11/04 06:24:26.348162 ERROR - log from opentelemetry sdk (count=4)
+2026/11/06 12:00:00 Starting log reporter (exporter=http) ...
+2026/11/06 12:00:01 Sent: 12:00:01.000000 INFO - log from opentelemetry sdk (count=1)
+2026/11/06 12:00:02 Sent: 12:00:02.000000 DEBUG - log from opentelemetry sdk (count=2)
+2026/11/06 12:00:03 Sent: 12:00:03.000000 WARN - log from opentelemetry sdk (count=3)
+2026/11/06 12:00:04 Sent: 12:00:04.000000 ERROR - log from opentelemetry sdk (count=4)
 ...
 ```
 
@@ -137,6 +143,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -152,7 +159,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 )
 
-// getEnv 读取环境变量
+// getEnv 读取环境变量，若未设置则返回默认值。
 func getEnv(key, defaultValue string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
@@ -160,44 +167,26 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
-// 日志级别定义
-type logLevel struct {
-	number otelLog.Severity
-	text   string
-}
-
-var logLevels = []logLevel{
-	{5, "DEBUG"},
-	{9, "INFO"},
-	{13, "WARN"},
-	{17, "ERROR"},
-}
-
-// newHttpExporter 创建 OTLP HTTP 导出器
-func newHttpExporter(endpoint, token string, insecure bool) (*otlploghttp.Exporter, error) {
-	opts := []otlploghttp.Option{
-		otlploghttp.WithEndpoint(endpoint),
+// newHttpExporter 创建 OTLP HTTP 日志导出器。
+func newHttpExporter(endpointURL, token string) (*otlploghttp.Exporter, error) {
+	return otlploghttp.New(
+		context.Background(),
+		otlploghttp.WithEndpointURL(endpointURL),
 		otlploghttp.WithHeaders(map[string]string{"X-BK-TOKEN": token}),
-	}
-	if insecure {
-		opts = append(opts, otlploghttp.WithInsecure())
-	}
-	return otlploghttp.New(context.Background(), opts...)
+	)
 }
 
-// newGrpcExporter 创建 OTLP gRPC 导出器
-func newGrpcExporter(endpoint, token string, insecure bool) (*otlploggrpc.Exporter, error) {
-	opts := []otlploggrpc.Option{
+// newGrpcExporter 创建 OTLP gRPC 日志导出器。
+func newGrpcExporter(endpoint, token string) (*otlploggrpc.Exporter, error) {
+	return otlploggrpc.New(
+		context.Background(),
 		otlploggrpc.WithEndpoint(endpoint),
+		otlploggrpc.WithInsecure(),
 		otlploggrpc.WithHeaders(map[string]string{"X-BK-TOKEN": token}),
-	}
-	if insecure {
-		opts = append(opts, otlploggrpc.WithInsecure())
-	}
-	return otlploggrpc.New(context.Background(), opts...)
+	)
 }
 
-// consoleExporter 自定义控制台导出器，输出纯文本格式
+// consoleExporter 实现 sdklog.Exporter 接口，将日志记录输出到控制台。
 type consoleExporter struct{}
 
 func (e *consoleExporter) Export(ctx context.Context, records []sdklog.Record) error {
@@ -210,46 +199,52 @@ func (e *consoleExporter) Export(ctx context.Context, records []sdklog.Record) e
 	return nil
 }
 
-func (e *consoleExporter) Shutdown(ctx context.Context) error {
-	return nil
-}
+func (e *consoleExporter) Shutdown(ctx context.Context) error   { return nil }
+func (e *consoleExporter) ForceFlush(ctx context.Context) error  { return nil }
 
-func (e *consoleExporter) ForceFlush(ctx context.Context) error {
-	return nil
-}
-
-// newConsoleExporter 创建控制台导出器
+// newConsoleExporter 创建仅输出到控制台的导出器。
 func newConsoleExporter() sdklog.Exporter {
 	return &consoleExporter{}
 }
 
+// logLevel 定义日志级别，包含 OTLP Severity 和文本描述。
+type logLevel struct {
+	severity otelLog.Severity
+	text     string
+}
+
+// logLevels 预定义 DEBUG/INFO/WARN/ERROR 四种日志级别。
+var logLevels = []logLevel{
+	{severity: 5, text: "DEBUG"},
+	{severity: 9, text: "INFO"},
+	{severity: 13, text: "WARN"},
+	{severity: 17, text: "ERROR"},
+}
+
 func main() {
 	// 命令行参数
-	output := flag.String("exporter", "stdout", "output exporter type: stdout/http/grpc")
-	interval := flag.Duration("interval", 1*time.Second, "log sending interval")
-	insecure := flag.Bool("insecure", false, "use insecure connection (only for http/grpc)")
+	output := flag.String("exporter", "http", "output exporter type: stdout/http/grpc")
 	flag.Parse()
 
 	// ❗❗【非常重要】认证令牌，用于接口鉴权，请替换为页面提供的日志数据源 Token。
 	token := getEnv("TOKEN", "fixme")
 	// ❗❗【非常重要】上报地址，国内站点默认是「 {{access_config.otlp.http_endpoint}}/v1/logs 」，
-// 其他环境、跨云场景请根据页面接入指引填写
-	apiURL := getEnv("API_URL", "fixme")
+	// 其他环境、跨云场景请根据页面接入指引填写。
+	apiURL := getEnv("API_URL", "{{access_config.otlp.http_endpoint}}/v1/logs")
 
 	// 创建导出器
 	var exporter sdklog.Exporter
 	var err error
 	switch *output {
 	case "grpc":
-		exporter, err = newGrpcExporter(apiURL, token, *insecure)
+		exporter, err = newGrpcExporter(apiURL, token)
 	case "http":
-		exporter, err = newHttpExporter(apiURL, token, *insecure)
+		exporter, err = newHttpExporter(apiURL, token)
 	default:
 		exporter = newConsoleExporter()
 	}
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to initialize log exporter: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("failed to initialize log exporter: %v", err)
 	}
 
 	// 创建资源
@@ -265,20 +260,19 @@ func main() {
 	)
 	global.SetLoggerProvider(provider)
 
-	// 获取 OTel Logger
-	logger := provider.Logger("otel")
-
-	// 信号处理
+	// 信号处理（支持 SIGINT 和 SIGTERM）
 	ctx, cancel := newOSSignalContext()
 	defer cancel()
 
-	// 输出启动信息
-	startTime := time.Now().Format("2006/01/02 15:04:05.000000")
-	fmt.Printf("%s Starting log reporter (exporter=%s) ...\n", startTime, *output)
+	// 获取 OTel Logger
+	logger := provider.Logger("otel")
 
-	// 主循环
+	// 输出启动信息
+	log.Printf("Starting log reporter (exporter=%s) ...\n", *output)
+
+	// 主循环：每秒上报一条随机级别的日志
 	go func() {
-		ticker := time.NewTicker(*interval)
+		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
 
 		rng := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -287,15 +281,14 @@ func main() {
 			select {
 			case <-ticker.C:
 				count++
-				// 随机选择日志级别
 				lvl := logLevels[rng.Intn(len(logLevels))]
+				now := time.Now()
 
 				// 构建日志记录
-				now := time.Now()
 				record := otelLog.Record{}
 				record.SetTimestamp(now)
 				record.SetObservedTimestamp(now)
-				record.SetSeverity(lvl.number)
+				record.SetSeverity(lvl.severity)
 				record.SetSeverityText(lvl.text)
 				record.SetBody(otelLog.StringValue(fmt.Sprintf("log from opentelemetry sdk (count=%d)", count)))
 				record.AddAttributes(
@@ -303,8 +296,14 @@ func main() {
 					otelLog.String("level", lvl.text),
 				)
 
-				// 发送日志
+				// 通过 OpenTelemetry 发送日志
 				logger.Emit(ctx, record)
+
+				// 在终端同步打印发送的日志内容
+				if *output != "stdout" {
+					log.Printf("Sent: %s %s - %s\n", now.Format("2006/01/02 15:04:05.000000"), lvl.text, record.Body().AsString())
+				}
+
 			case <-ctx.Done():
 				return
 			}
@@ -312,18 +311,17 @@ func main() {
 	}()
 
 	<-ctx.Done()
-	fmt.Println("Received shutdown signal, exiting...")
+	log.Println("Received shutdown signal, exiting...")
 
-	// 优雅关闭
+	// 优雅关闭 LoggerProvider
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
 	if err := provider.Shutdown(shutdownCtx); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to stop the log provider: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("failed to stop the log provider: %v", err)
 	}
 }
 
-// newOSSignalContext 创建监听 SIGINT 和 SIGTERM 的上下文
+// newOSSignalContext 创建监听 SIGINT 和 SIGTERM 的上下文，支持优雅退出。
 func newOSSignalContext() (context.Context, func()) {
 	ctx, cancel := context.WithCancel(context.Background())
 	c := make(chan os.Signal, 1)

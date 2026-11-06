@@ -20,7 +20,6 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 
 FROM alpine:3.20 AS runtime
 
-
 RUN apk add --no-cache ca-certificates
 
 WORKDIR /app
@@ -29,5 +28,5 @@ COPY --from=builder /bin/app /app/reporter
 ENV API_URL="fixme" \
     TOKEN="fixme"
 
-
-CMD ["/app/reporter", "-exporter", "stdout", "-interval", "1s"]
+ENTRYPOINT ["/app/reporter"]
+CMD ["-exporter", "http"]
