@@ -7,6 +7,7 @@
 // specific language governing permissions and limitations under the License.
 
 // 该示例演示使用 OpenTelemetry C++ SDK 通过 OTLP/HTTP 上报日志到蓝鲸监控平台。
+#include <atomic>
 #include <iostream>
 #include <string>
 #include <csignal>
@@ -29,12 +30,15 @@ namespace logs_sdk      = opentelemetry::sdk::logs;
 namespace otlp_exporter = opentelemetry::exporter::otlp;
 namespace nostd         = opentelemetry::nostd;
 
-volatile bool running = true;
+std::atomic<bool> running{true};
 
-void SignalHandler(int signum) {
-    std::cout << "\nReceived signal " << signum << ", shutting down..." << std::endl;
-    running = false;
-}
+void SignalHandler(int) { running = false; }
+
+struct LogLevel { logs_api::Severity severity; const char* text; };
+const LogLevel kLevels[] = {
+    {logs_api::Severity::kInfo, "INFO"},  {logs_api::Severity::kWarn, "WARN"},
+    {logs_api::Severity::kError, "ERROR"}, {logs_api::Severity::kDebug, "DEBUG"},
+};
 
 std::string CurrentTimeStr() {
     auto now = std::chrono::system_clock::now();
@@ -88,38 +92,30 @@ int main() {
     // 设置为全局 LoggerProvider（必须使用 std::move 转为右值）
     logs_api::Provider::SetLoggerProvider(std::move(provider));
 
-    auto logger = g_provider->GetLogger("otel", "1.0.0", "", "");
+    // logger_name, library_name, library_version
+    auto logger = g_provider->GetLogger("otel", "otel", "1.0.0");
 
     std::cout << CurrentTimeStr() << " - INFO - Starting log reporter (press Ctrl+C/SIGTERM to stop)..." << std::endl;
 
     int count = 0;
     while (running) {
         auto record = logger->CreateLogRecord();
+        const auto& level = kLevels[count % 4];
 
-        // 轮流设置不同级别
-        switch (count % 4) {
-            case 0: record->SetSeverity(logs_api::Severity::kInfo);    break;
-            case 1: record->SetSeverity(logs_api::Severity::kWarn);    break;
-            case 2: record->SetSeverity(logs_api::Severity::kError);   break;
-            case 3: record->SetSeverity(logs_api::Severity::kDebug);   break;
-        }
+        // 显式设置事件发生时间，避免上报的时间戳为 0
+        auto now = std::chrono::system_clock::now();
+        record->SetTimestamp(now);
+        record->SetSeverity(level.severity);
         record->SetBody("log from cpp sdk");
         logger->EmitLogRecord(std::move(record));
 
-        // 终端输出
-        std::string level_str;
-        switch (count % 4) {
-            case 0: level_str = "INFO";    break;
-            case 1: level_str = "WARNING"; break;
-            case 2: level_str = "ERROR";   break;
-            case 3: level_str = "DEBUG";   break;
-        }
-        std::cout << CurrentTimeStr() << " - " << level_str << " - log from cpp sdk" << std::endl;
+        std::cout << CurrentTimeStr() << " - " << level.text << " - log from cpp sdk" << std::endl;
 
         count++;
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
+    std::cout << CurrentTimeStr() << " - INFO - shutting down..." << std::endl;
     g_provider->Shutdown();
     return 0;
 }

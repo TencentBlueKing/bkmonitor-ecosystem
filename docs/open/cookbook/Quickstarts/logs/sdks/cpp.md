@@ -54,6 +54,7 @@ cd bkmonitor-ecosystem/examples/logs/sdks/cpp
 
 #include "opentelemetry/logs/provider.h"
 #include "opentelemetry/sdk/logs/logger_provider.h"
+#include "opentelemetry/sdk/logs/batch_log_record_processor.h"
 #include "opentelemetry/sdk/resource/resource.h"
 #include "opentelemetry/exporters/otlp/otlp_http_log_record_exporter.h"
 #include "opentelemetry/exporters/otlp/otlp_http_log_record_exporter_options.h"
@@ -121,7 +122,7 @@ docker run -e TOKEN="fixme" \
 ```bash
 2026-11-23 10:41:52,588 - INFO - Starting log reporter (press Ctrl+C/SIGTERM to stop)...
 2026-11-23 10:41:52,614 - INFO - log from cpp sdk
-2026-11-23 10:41:53,614 - WARNING - log from cpp sdk
+2026-11-23 10:41:53,614 - WARN - log from cpp sdk
 2026-11-23 10:41:54,614 - ERROR - log from cpp sdk
 2026-11-23 10:41:55,614 - DEBUG - log from cpp sdk
 ...
@@ -131,9 +132,10 @@ docker run -e TOKEN="fixme" \
 
 ### 2.4 样例代码
 
-该样例使用 OpenTelemetry C++ SDK（`opentelemetry-cpp` v1.18.0），通过 OTLP/HTTP（Protobuf）协议上报日志。代码通过 `OtlpHttpLogRecordExporter` 创建日志导出器，并在 `x-bk-token` Header 中注入 Token；通过 `Resource` 声明服务名与环境，使用 `BatchLogRecordProcessor` 批量处理日志；使用 `LoggerProvider` 创建 Logger 后，手动构造 `LogRecord` 并设置级别与内容，最后调用 `EmitLogRecord` 完成上报。退出时调用 `Shutdown` 刷新并释放资源。
+该样例使用 OpenTelemetry C++ SDK（`opentelemetry-cpp` v1.18.0），通过 OTLP/HTTP（Protobuf）协议上报日志。代码通过 `OtlpHttpLogRecordExporter` 创建日志导出器，并在 `x-bk-token` Header 中注入 Token；通过 `Resource` 声明服务名与环境，使用 `BatchLogRecordProcessor` 批量处理日志；使用 `LoggerProvider` 创建 Logger 后，手动构造 `LogRecord` 并设置时间、级别与内容，最后调用 `EmitLogRecord` 完成上报。退出时调用 `Shutdown` 刷新并释放资源。
 
 ```cpp
+#include <atomic>
 #include <iostream>
 #include <string>
 #include <csignal>
@@ -156,12 +158,15 @@ namespace logs_sdk      = opentelemetry::sdk::logs;
 namespace otlp_exporter = opentelemetry::exporter::otlp;
 namespace nostd         = opentelemetry::nostd;
 
-volatile bool running = true;
+std::atomic<bool> running{true};
 
-void SignalHandler(int signum) {
-    std::cout << "\nReceived signal " << signum << ", shutting down..." << std::endl;
-    running = false;
-}
+void SignalHandler(int) { running = false; }
+
+struct LogLevel { logs_api::Severity severity; const char* text; };
+const LogLevel kLevels[] = {
+    {logs_api::Severity::kInfo, "INFO"},  {logs_api::Severity::kWarn, "WARN"},
+    {logs_api::Severity::kError, "ERROR"}, {logs_api::Severity::kDebug, "DEBUG"},
+};
 
 std::string CurrentTimeStr() {
     auto now = std::chrono::system_clock::now();
@@ -215,38 +220,30 @@ int main() {
     // 设置为全局 LoggerProvider（必须使用 std::move 转为右值）
     logs_api::Provider::SetLoggerProvider(std::move(provider));
 
-    auto logger = g_provider->GetLogger("otel", "1.0.0", "", "");
+    // logger_name, library_name, library_version
+    auto logger = g_provider->GetLogger("otel", "otel", "1.0.0");
 
     std::cout << CurrentTimeStr() << " - INFO - Starting log reporter (press Ctrl+C/SIGTERM to stop)..." << std::endl;
 
     int count = 0;
     while (running) {
         auto record = logger->CreateLogRecord();
+        const auto& level = kLevels[count % 4];
 
-        // 轮流设置不同级别
-        switch (count % 4) {
-            case 0: record->SetSeverity(logs_api::Severity::kInfo);    break;
-            case 1: record->SetSeverity(logs_api::Severity::kWarn);    break;
-            case 2: record->SetSeverity(logs_api::Severity::kError);   break;
-            case 3: record->SetSeverity(logs_api::Severity::kDebug);   break;
-        }
+        // 显式设置事件发生时间，避免上报的时间戳为 0
+        auto now = std::chrono::system_clock::now();
+        record->SetTimestamp(now);
+        record->SetSeverity(level.severity);
         record->SetBody("log from cpp sdk");
         logger->EmitLogRecord(std::move(record));
 
-        // 终端输出
-        std::string level_str;
-        switch (count % 4) {
-            case 0: level_str = "INFO";    break;
-            case 1: level_str = "WARNING"; break;
-            case 2: level_str = "ERROR";   break;
-            case 3: level_str = "DEBUG";   break;
-        }
-        std::cout << CurrentTimeStr() << " - " << level_str << " - log from cpp sdk" << std::endl;
+        std::cout << CurrentTimeStr() << " - " << level.text << " - log from cpp sdk" << std::endl;
 
         count++;
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
+    std::cout << CurrentTimeStr() << " - INFO - shutting down..." << std::endl;
     g_provider->Shutdown();
     return 0;
 }

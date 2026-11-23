@@ -4,7 +4,7 @@ project(otel-log-reporter CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 显式查找依赖标
+# 显式查找依赖
 find_package(CURL REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
