@@ -70,7 +70,7 @@ func (e *consoleExporter) Export(ctx context.Context, records []sdklog.Record) e
 }
 
 func (e *consoleExporter) Shutdown(ctx context.Context) error   { return nil }
-func (e *consoleExporter) ForceFlush(ctx context.Context) error  { return nil }
+func (e *consoleExporter) ForceFlush(ctx context.Context) error { return nil }
 
 // newConsoleExporter 创建仅输出到控制台的导出器。
 func newConsoleExporter() sdklog.Exporter {
@@ -89,6 +89,46 @@ var logLevels = []logLevel{
 	{severity: 9, text: "INFO"},
 	{severity: 13, text: "WARN"},
 	{severity: 17, text: "ERROR"},
+}
+
+// reportLogs 每秒生成并上报一条随机级别的日志，收到 ctx 取消信号后退出。
+func reportLogs(ctx context.Context, logger otelLog.Logger, output string) {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	var count int
+	for {
+		select {
+		case <-ticker.C:
+			count++
+			lvl := logLevels[rng.Intn(len(logLevels))]
+			now := time.Now()
+
+			// 构建日志记录
+			record := otelLog.Record{}
+			record.SetTimestamp(now)
+			record.SetObservedTimestamp(now)
+			record.SetSeverity(lvl.severity)
+			record.SetSeverityText(lvl.text)
+			record.SetBody(otelLog.StringValue(fmt.Sprintf("log from opentelemetry sdk (count=%d)", count)))
+			record.AddAttributes(
+				otelLog.Int("count", count),
+				otelLog.String("level", lvl.text),
+			)
+
+			// 通过 OpenTelemetry 发送日志
+			logger.Emit(ctx, record)
+
+			// 在终端同步打印发送的日志内容
+			if output != "stdout" {
+				log.Printf("Sent: %s %s - %s\n", now.Format("2006/01/02 15:04:05.000000"), lvl.text, record.Body().AsString())
+			}
+
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func main() {
@@ -141,44 +181,7 @@ func main() {
 	log.Printf("Starting log reporter (exporter=%s) ...\n", *output)
 
 	// 主循环：每秒上报一条随机级别的日志
-	go func() {
-		ticker := time.NewTicker(time.Second)
-		defer ticker.Stop()
-
-		rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-		var count int
-		for {
-			select {
-			case <-ticker.C:
-				count++
-				lvl := logLevels[rng.Intn(len(logLevels))]
-				now := time.Now()
-
-				// 构建日志记录
-				record := otelLog.Record{}
-				record.SetTimestamp(now)
-				record.SetObservedTimestamp(now)
-				record.SetSeverity(lvl.severity)
-				record.SetSeverityText(lvl.text)
-				record.SetBody(otelLog.StringValue(fmt.Sprintf("log from opentelemetry sdk (count=%d)", count)))
-				record.AddAttributes(
-					otelLog.Int("count", count),
-					otelLog.String("level", lvl.text),
-				)
-
-				// 通过 OpenTelemetry 发送日志
-				logger.Emit(ctx, record)
-
-				// 在终端同步打印发送的日志内容
-				if *output != "stdout" {
-					log.Printf("Sent: %s %s - %s\n", now.Format("2006/01/02 15:04:05.000000"), lvl.text, record.Body().AsString())
-				}
-
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
+	go reportLogs(ctx, logger, *output)
 
 	<-ctx.Done()
 	log.Println("Received shutdown signal, exiting...")
