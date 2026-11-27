@@ -2,6 +2,8 @@
 
 {{PROFILING_OVERVIEW}}
 
+💡 如果只需临时分析主机上 Go 进程的性能，也可以使用 <a href="{{REFER_ACTIVE_PROFILING_URL}}" target="_blank">Profiling 主动采集</a>，在观测平台上按需发起采集：Perf 采集方式无需修改代码，Go 采集方式需要程序开启 pprof 端点。
+
 ## 1. 前置准备
 
 ### 1.1 术语介绍

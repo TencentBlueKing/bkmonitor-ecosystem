@@ -4,6 +4,8 @@
 
 入门项目功能齐全且可在开发环境运行，可以通过该项目快速入门 OpenTelemetry，接入并体验蓝鲸应用性能监控相关功能。
 
+💡 如果需要临时分析主机上 C++ 进程的 CPU 性能，可使用 <a href="https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/active-profiling/README.md" target="_blank">Profiling 主动采集</a>，在观测平台上按需发起 Perf 采集，无需修改代码。
+
 ## 1. 前置准备
 
 ### 1.1 术语介绍
