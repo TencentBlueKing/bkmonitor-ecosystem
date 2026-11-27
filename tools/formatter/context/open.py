@@ -61,6 +61,13 @@ class ReferGolangTrpcOteamUrl(metaclass=base.FieldMeta):
         value = ""
 
 
+class ReferActiveProfilingUrl(metaclass=base.FieldMeta):
+    class Meta:
+        name = "REFER_ACTIVE_PROFILING_URL"
+        scope = base.ScopeType.OPEN.value
+        value = "https://github.com/TencentBlueKing/bkmonitor-ecosystem/blob/master/docs/open/common/active-profiling/README.md"
+
+
 class TermIntro(metaclass=base.FieldMeta):
     class Meta:
         name = "TERM_INTRO"
